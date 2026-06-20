@@ -36,12 +36,6 @@ export async function POST(request) {
         { $set: { status: "paid" } }
       );
 
-      // 2. Reduce ticket availability quantity using native MongoDB updates
-      await db.collection("tickets").updateOne(
-        { _id: new ObjectId(ticketId) },
-        { $inc: { ticketQuantity: -qty } }
-      );
-
       // 3. Log transaction details into 'transactions' collection
       await db.collection("transactions").insertOne({
         bookingId,

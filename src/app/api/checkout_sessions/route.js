@@ -53,7 +53,7 @@ export async function POST(request) {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/user?status=success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/user?status=success&bookingId=${bookingId}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/user?status=cancel`,
       metadata: {
         bookingId: bookingId,

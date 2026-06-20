@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useSession, authClient } from "@/lib/auth-client";
+import CountUp from "@/components/CountUp";
 import { 
   User, Mail, CreditCard, Ticket, Calendar, ShieldCheck, 
-  Clock, ShieldAlert, ArrowRight, Loader2 
+  Clock, ShieldAlert, ArrowRight, Loader2, ListFilter, DollarSign
 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 export default function UserDashboard() {
   const { data: session } = useSession();
@@ -15,6 +18,14 @@ export default function UserDashboard() {
   const [loadingTx, setLoadingTx] = useState(true);
   const [paymentLoading, setPaymentLoading] = useState("");
   const [error, setError] = useState("");
+
+  // Tab State: "bookings" or "transactions"
+  const [activeTab, setActiveTab] = useState("bookings");
+
+  // Pagination states
+  const [bookingPage, setBookingPage] = useState(1);
+  const [txPage, setTxPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     if (!session?.user) return;
@@ -26,6 +37,28 @@ export default function UserDashboard() {
         token = tokenRes?.data?.token || "";
       } catch (e) {
         console.error("Error retrieving JWT token:", e);
+      }
+
+      // Fallback: Confirm payment on redirect (handles local environment where Stripe webhooks can't reach)
+      if (typeof window !== "undefined") {
+        const searchParams = new URLSearchParams(window.location.search);
+        const statusParam = searchParams.get("status");
+        const bookingIdParam = searchParams.get("bookingId");
+
+        if (statusParam === "success" && bookingIdParam) {
+          try {
+            await fetch(`http://localhost:5000/api/bookings/${bookingIdParam}/pay`, {
+              method: "PUT",
+              headers: {
+                "Authorization": `Bearer ${token}`
+              }
+            });
+            // Clean up URL query parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (err) {
+            console.error("Local payment confirmation failed:", err);
+          }
+        }
       }
 
       // 1. Fetch Bookings
@@ -87,7 +120,9 @@ export default function UserDashboard() {
       // Redirect user to Stripe Checkout window
       window.location.href = data.url;
     } catch (err) {
-      setError(err.message || "Payment trigger failed.");
+      const errMsg = err.message || "Payment trigger failed.";
+      setError(errMsg);
+      toast.error(errMsg);
       setPaymentLoading("");
     }
   };
@@ -105,24 +140,41 @@ export default function UserDashboard() {
     }
   };
 
+  // Math for stats cards
+  const totalBookingsCount = bookings.length;
+  const paidBookingsCount = bookings.filter(b => b.status === "paid").length;
+  const totalAmountSpent = transactions.reduce((acc, tx) => acc + (tx.amount || 0), 0);
+
+  // Paginated bookings
+  const indexOfLastBooking = bookingPage * itemsPerPage;
+  const indexOfFirstBooking = indexOfLastBooking - itemsPerPage;
+  const currentBookings = bookings.slice(indexOfFirstBooking, indexOfLastBooking);
+  const totalBookingPages = Math.ceil(bookings.length / itemsPerPage);
+
+  // Paginated transactions
+  const indexOfLastTx = txPage * itemsPerPage;
+  const indexOfFirstTx = indexOfLastTx - itemsPerPage;
+  const currentTransactions = transactions.slice(indexOfFirstTx, indexOfLastTx);
+  const totalTxPages = Math.ceil(transactions.length / itemsPerPage);
+
   return (
     <div className="space-y-10">
       
       {/* Profile Section */}
-      <section className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+      <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 liftup">
         <img
           src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
           alt={session?.user?.name}
-          className="w-20 h-20 rounded-full object-cover border-4 border-indigo-500 shadow-sm"
+          className="w-20 h-20 rounded-full object-cover border-4 border-[var(--primary)] shadow-sm"
         />
         <div className="text-center sm:text-left space-y-1">
-          <h1 className="text-2xl font-black">{session?.user?.name}</h1>
+          <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">{session?.user?.name}</h1>
           <div className="flex flex-col sm:flex-row sm:space-x-4 text-xs text-gray-500">
             <span className="flex items-center justify-center sm:justify-start space-x-1">
-              <Mail className="w-3.5 h-3.5" />
+              <Mail className="w-3.5 h-3.5 text-[var(--primary)]" />
               <span>{session?.user?.email}</span>
             </span>
-            <span className="flex items-center justify-center sm:justify-start space-x-1 uppercase font-bold text-indigo-500">
+            <span className="flex items-center justify-center sm:justify-start space-x-1 uppercase font-bold text-[var(--primary)]">
               <User className="w-3.5 h-3.5" />
               <span>{session?.user?.role} Account</span>
             </span>
@@ -130,121 +182,235 @@ export default function UserDashboard() {
         </div>
       </section>
 
+      {/* Analytics/Summary Stats (React CountUp) */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Bookings</span>
+            <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
+              {loadingBookings ? "..." : <CountUp end={totalBookingsCount} />}
+            </span>
+          </div>
+          <div className="p-3 bg-[var(--primary)]/10 text-[var(--primary)] rounded-2xl">
+            <Ticket className="w-6 h-6" />
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Paid Bookings</span>
+            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+              {loadingBookings ? "..." : <CountUp end={paidBookingsCount} />}
+            </span>
+          </div>
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Spent</span>
+            <span className="text-3xl font-black text-[var(--accent)]">
+              ${loadingTx ? "..." : <CountUp end={totalAmountSpent} />}
+            </span>
+          </div>
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 text-[var(--accent)] rounded-2xl">
+            <DollarSign className="w-6 h-6" />
+          </div>
+        </div>
+      </section>
+
+      {/* Tabs Navigator */}
+      <div className="flex border-b border-[var(--border)] pb-px">
+        <button
+          onClick={() => setActiveTab("bookings")}
+          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
+            activeTab === "bookings"
+              ? "border-[var(--primary)] text-[var(--primary)]"
+              : "border-transparent text-gray-400 hover:text-slate-600"
+          }`}
+        >
+          <Ticket className="w-4 h-4" />
+          <span>My Bookings</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("transactions")}
+          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
+            activeTab === "transactions"
+              ? "border-[var(--primary)] text-[var(--primary)]"
+              : "border-transparent text-gray-400 hover:text-slate-600"
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>Payments History</span>
+        </button>
+      </div>
+
       {/* Error prompt */}
       {error && (
-        <div className="flex items-center space-x-2 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-xs font-semibold border border-red-200">
-          <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
-        </div>
+        <Alert variant="destructive" className="liftup">
+          <ShieldAlert className="w-4 h-4" />
+          <AlertTitle>Error Alert</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      {/* Bookings Grid */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-extrabold flex items-center space-x-2">
-          <Ticket className="w-5 h-5 text-indigo-500" />
-          <span>My Reserved Tickets</span>
-        </h2>
-
-        {loadingBookings ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-44 bg-gray-200 dark:bg-slate-800 rounded-2xl" />
-            ))}
-          </div>
-        ) : bookings.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-12 text-center text-gray-500 text-sm font-medium">
-            No booking requests made yet. Go grab some tickets!
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {bookings.map((booking) => (
-              <div 
-                key={booking._id}
-                className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4"
-              >
-                <div className="flex justify-between items-start">
-                  <span className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">
-                    {booking.transportType} Travel
-                  </span>
-                  {getStatusBadge(booking.status)}
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="font-extrabold text-sm truncate">{booking.ticketTitle}</h3>
-                  <div className="flex items-center space-x-1.5 text-xs text-gray-500">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{new Date(booking.departureDateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center text-xs border-t border-gray-100 dark:border-slate-800/80 pt-3">
-                  <span className="text-gray-400">Qty: <strong>{booking.bookedQuantity} seats</strong></span>
-                  <span className="font-extrabold">${booking.totalPrice}</span>
-                </div>
-
-                {/* Stripe Pay button */}
-                {booking.status === "accepted" && (
-                  <button
-                    onClick={() => handlePayNow(booking._id)}
-                    disabled={paymentLoading === booking._id}
-                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-1 shadow-md transition-colors"
-                  >
-                    {paymentLoading === booking._id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <>
-                        <CreditCard className="w-3.5 h-3.5" />
-                        <span>Pay Now</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Transaction History Section */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-extrabold flex items-center space-x-2">
-          <ShieldCheck className="w-5 h-5 text-indigo-500" />
-          <span>Payment Transactions</span>
-        </h2>
-
-        {loadingTx ? (
-          <div className="h-32 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
-        ) : transactions.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-12 text-center text-gray-500 text-sm font-medium">
-            No payments logged yet.
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-slate-950 border-b border-gray-100 dark:border-slate-800 font-bold uppercase tracking-wider text-gray-500">
-                    <th className="p-4">Payment Intent ID</th>
-                    <th className="p-4">Billing Email</th>
-                    <th className="p-4">Amount</th>
-                    <th className="p-4">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-350">
-                  {transactions.map((tx) => (
-                    <tr key={tx._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
-                      <td className="p-4 font-mono select-all text-[11px] text-indigo-500">{tx.paymentIntentId}</td>
-                      <td className="p-4">{tx.email}</td>
-                      <td className="p-4 font-bold text-slate-800 dark:text-slate-100">${tx.amount}</td>
-                      <td className="p-4 text-gray-400">{new Date(tx.createdAt).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Tab 1 Content: Bookings */}
+      {activeTab === "bookings" && (
+        <section className="space-y-6">
+          {loadingBookings ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-44 bg-gray-200 dark:bg-slate-800 rounded-2xl" />
+              ))}
             </div>
-          </div>
-        )}
-      </section>
+          ) : bookings.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-12 text-center text-gray-500 text-sm font-medium liftup">
+              No booking requests made yet. Go grab some tickets!
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {currentBookings.map((booking) => (
+                  <div 
+                    key={booking._id}
+                    className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between liftup"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <span className="text-[10px] font-black uppercase text-[var(--primary)] tracking-wider">
+                          {booking.transportType} Travel
+                        </span>
+                        {getStatusBadge(booking.status)}
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="font-extrabold text-sm truncate text-slate-800 dark:text-slate-100">{booking.ticketTitle}</h3>
+                        <div className="flex items-center space-x-1.5 text-xs text-gray-500">
+                          <Calendar className="w-3.5 h-3.5 text-[var(--primary)]" />
+                          <span>{new Date(booking.departureDateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-slate-800/80">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-400">Qty: <strong>{booking.bookedQuantity} seats</strong></span>
+                        <span className="font-extrabold text-slate-800 dark:text-slate-100">${booking.totalPrice}</span>
+                      </div>
+
+                      {/* Stripe Pay button */}
+                      {booking.status === "accepted" && (
+                        <button
+                          onClick={() => handlePayNow(booking._id)}
+                          disabled={paymentLoading === booking._id}
+                          className="w-full py-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-1 shadow-md transition-colors"
+                        >
+                          {paymentLoading === booking._id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <CreditCard className="w-3.5 h-3.5" />
+                              <span>Pay Now</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bookings Pagination */}
+              {totalBookingPages > 1 && (
+                <div className="flex justify-center items-center space-x-4 pt-4">
+                  <button
+                    onClick={() => setBookingPage(prev => Math.max(prev - 1, 1))}
+                    disabled={bookingPage === 1}
+                    className="px-4 py-2 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs font-bold text-gray-500">
+                    Page {bookingPage} of {totalBookingPages}
+                  </span>
+                  <button
+                    onClick={() => setBookingPage(prev => Math.min(prev + 1, totalBookingPages))}
+                    disabled={bookingPage === totalBookingPages}
+                    className="px-4 py-2 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {/* Tab 2 Content: Transactions */}
+      {activeTab === "transactions" && (
+        <section className="space-y-6">
+          {loadingTx ? (
+            <div className="h-32 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
+          ) : transactions.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-12 text-center text-gray-500 text-sm font-medium liftup">
+              No payments logged yet.
+            </div>
+          ) : (
+            <>
+              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm liftup">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)] font-bold uppercase tracking-wider text-gray-500">
+                        <th className="p-4">Payment Intent ID</th>
+                        <th className="p-4">Billing Email</th>
+                        <th className="p-4">Amount</th>
+                        <th className="p-4">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-350">
+                      {currentTransactions.map((tx) => (
+                        <tr key={tx._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
+                          <td className="p-4 font-mono select-all text-[11px] text-[var(--accent)]">{tx.paymentIntentId}</td>
+                          <td className="p-4">{tx.email}</td>
+                          <td className="p-4 font-bold text-slate-800 dark:text-slate-100">${tx.amount}</td>
+                          <td className="p-4 text-gray-400">{new Date(tx.createdAt).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Transactions Pagination */}
+              {totalTxPages > 1 && (
+                <div className="flex justify-center items-center space-x-4 pt-4">
+                  <button
+                    onClick={() => setTxPage(prev => Math.max(prev - 1, 1))}
+                    disabled={txPage === 1}
+                    className="px-4 py-2 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs font-bold text-gray-500">
+                    Page {txPage} of {totalTxPages}
+                  </span>
+                  <button
+                    onClick={() => setTxPage(prev => Math.min(prev + 1, totalTxPages))}
+                    disabled={txPage === totalTxPages}
+                    className="px-4 py-2 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
 
     </div>
   );

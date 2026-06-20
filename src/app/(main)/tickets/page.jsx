@@ -7,6 +7,8 @@ import {
   Search, Plane, Bus, Train, ArrowUpDown, ArrowRight, 
   MapPin, SlidersHorizontal 
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
 
 function TicketsContent() {
   const router = useRouter();
@@ -129,23 +131,23 @@ function TicketsContent() {
             
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-400">Leaving From</label>
-              <input 
+              <Input 
                 type="text"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 placeholder="e.g. Dhaka"
-                className="w-full px-3.5 py-2 text-xs bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-9 text-xs"
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-400">Going To</label>
-              <input 
+              <Input 
                 type="text"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 placeholder="e.g. Cox's Bazar"
-                className="w-full px-3.5 py-2 text-xs bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-9 text-xs"
               />
             </div>
 

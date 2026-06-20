@@ -4,6 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { signUp } from "@/lib/auth-client";
 import { UserPlus, User, Mail, Key, Image, AlertCircle, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -91,13 +94,12 @@ export default function SignUpPage() {
               <User className="w-3 h-3" />
               <span>Full Name</span>
             </label>
-            <input
+            <Input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -106,13 +108,12 @@ export default function SignUpPage() {
               <Mail className="w-3 h-3" />
               <span>Email Address</span>
             </label>
-            <input
+            <Input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -121,13 +122,12 @@ export default function SignUpPage() {
               <Key className="w-3 h-3" />
               <span>Password</span>
             </label>
-            <input
+            <Input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -136,14 +136,13 @@ export default function SignUpPage() {
               <Sparkles className="w-3 h-3" />
               <span>Register As</span>
             </label>
-            <select
+            <Select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="user">User (Passenger)</option>
               <option value="vendor">Vendor (Transport Company)</option>
-            </select>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
@@ -151,11 +150,11 @@ export default function SignUpPage() {
               <Image className="w-3 h-3" />
               <span>Profile Image</span>
             </label>
-            <input
+            <Input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-950/40 file:text-indigo-600 dark:file:text-indigo-400 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-950/60"
+              className="file:mr-4 file:py-0 file:px-0 file:border-0 file:bg-transparent file:text-xs file:font-semibold file:text-[var(--primary)] hover:file:opacity-80"
             />
           </div>
 

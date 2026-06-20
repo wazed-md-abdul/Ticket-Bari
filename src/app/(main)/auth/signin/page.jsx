@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
 import { LogIn, Key, Mail, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -64,13 +66,12 @@ export default function SignInPage() {
               <Mail className="w-3 h-3" />
               <span>Email Address</span>
             </label>
-            <input
+            <Input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -79,13 +80,12 @@ export default function SignInPage() {
               <Key className="w-3 h-3" />
               <span>Password</span>
             </label>
-            <input
+            <Input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
