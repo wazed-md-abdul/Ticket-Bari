@@ -673,7 +673,7 @@ export default function VendorDashboard() {
                             <span className="font-bold text-slate-800 dark:text-slate-100 block">${b.totalPrice}</span>
                           </td>
                           <td className="p-4">
-                            {b.status === "requested" ? (
+                            {b.status === "pending" ? (
                               <div className="flex items-center space-x-2">
                                 <button
                                   onClick={() => handleBookingAction(b._id, "accepted")}
