@@ -13,6 +13,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
+const lightImages = [
+  "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920", // Luxury Bus Coach
+  "https://images.unsplash.com/photo-1532103054090-334e6e60ab29?auto=format&fit=crop&q=80&w=1920", // Scenic Train
+  "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80&w=1920"  // Flight / Airplane
+];
+
+const darkImages = [
+  "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&q=80&w=1920", // Night Highway / Traffic Trails
+  "https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&q=80&w=1920", // Night Train / Rail
+  "https://images.unsplash.com/photo-1483450388369-9ed95738483c?auto=format&fit=crop&q=80&w=1920"  // Night Flight / Cabin View
+];
+
 export default function HomePage() {
   const router = useRouter();
   const [ads, setAds] = useState([]);
@@ -31,6 +43,42 @@ export default function HomePage() {
     transportType: "",
     date: "",
   });
+
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  // Watch for theme class changes
+  useEffect(() => {
+    const checkTheme = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      setIsDarkMode(isDark);
+    };
+
+    checkTheme();
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          checkTheme();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Slideshow interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % 3);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch advertisements and latest tickets
   useEffect(() => {
@@ -94,21 +142,27 @@ export default function HomePage() {
   return (
     <div className="space-y-24 pb-24 bg-[var(--background)]">
       
-      {/* 1. CREATIVE HERO SECTION WITH ACCENT GLOWS & CUSTOM VIDEO */}
+      {/* 1. CREATIVE HERO SECTION WITH ACCENT GLOWS & CUSTOM SLIDESHOW */}
       <section className="relative h-[720px] w-full overflow-hidden flex items-center justify-center">
-        {/* Background Video Loop */}
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline 
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        >
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-highway-crossing-a-forest-42290-large.mp4" type="video/mp4" />
-        </video>
+        {/* Background Swiper Slideshow */}
+        <div className="absolute inset-0 z-0">
+          {(isDarkMode ? darkImages : lightImages).map((src, index) => (
+            <div
+              key={src}
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
+                index === slideIndex ? "opacity-100" : "opacity-0"
+              }`}
+              style={{ backgroundImage: `url(${src})` }}
+            />
+          ))}
+        </div>
         
-        {/* Cinematic Radial Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/50 to-slate-950/80 z-10" />
+        {/* Cinematic Radial Overlay */}
+        <div className={`absolute inset-0 bg-gradient-to-b transition-all duration-1000 z-10 ${
+          isDarkMode 
+            ? "from-slate-950/70 via-slate-950/50 to-slate-950/80" 
+            : "from-slate-950/40 via-slate-950/25 to-slate-950/50"
+        }`} />
 
         {/* Floating Particle Glow Layers */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-10 opacity-40">

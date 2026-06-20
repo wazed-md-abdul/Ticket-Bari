@@ -123,58 +123,62 @@ function TicketsContent() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left Filters Box */}
         <div className="space-y-6 lg:col-span-1">
-          <form onSubmit={handleSearchSubmit} className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-6 space-y-4 shadow-sm">
-            <h2 className="font-bold text-sm uppercase tracking-wider text-gray-505 flex items-center space-x-2">
-              <SlidersHorizontal className="w-4 h-4" />
+          <form onSubmit={handleSearchSubmit} className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 space-y-4 shadow-md">
+            <h2 className="font-bold text-sm uppercase tracking-wider text-foreground/80 flex items-center space-x-2">
+              <SlidersHorizontal className="w-4 h-4 text-[var(--primary)]" />
               <span>Search Filters</span>
             </h2>
             
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-400">Leaving From</label>
+              <label className="text-xs font-bold text-foreground/60">Leaving From</label>
               <Input 
                 type="text"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 placeholder="e.g. Dhaka"
-                className="h-9 text-xs"
+                className="h-9 text-xs bg-[var(--input)] border-[var(--border)] text-foreground placeholder:text-foreground/40"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-400">Going To</label>
+              <label className="text-xs font-bold text-foreground/60">Going To</label>
               <Input 
                 type="text"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 placeholder="e.g. Cox's Bazar"
-                className="h-9 text-xs"
+                className="h-9 text-xs bg-[var(--input)] border-[var(--border)] text-foreground placeholder:text-foreground/40"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all-300"
+              className="w-full py-2.5 bg-[var(--primary)] hover:opacity-95 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95"
             >
               Apply Searches
             </button>
           </form>
 
           {/* Quick Filters */}
-          <div className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl p-6 space-y-4 shadow-sm">
-            <h2 className="font-bold text-xs uppercase tracking-wider text-gray-505">Transport Type</h2>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 space-y-4 shadow-md">
+            <h2 className="font-bold text-xs uppercase tracking-wider text-foreground/80">Transport Type</h2>
             <div className="flex flex-col space-y-2">
               <button 
                 onClick={() => handleTypeChange("")}
-                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-colors flex items-center justify-between ${
-                  !transportType ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400" : "hover:bg-gray-50 dark:hover:bg-slate-800/40"
+                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-all duration-300 flex items-center justify-between ${
+                  !transportType 
+                    ? "bg-[var(--primary)]/10 text-[var(--primary)]" 
+                    : "text-foreground/75 hover:bg-[var(--input)]"
                 }`}
               >
                 <span>All Vehicles</span>
               </button>
               <button 
                 onClick={() => handleTypeChange("bus")}
-                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-colors flex items-center justify-between ${
-                  transportType === "bus" ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400" : "hover:bg-gray-50 dark:hover:bg-slate-800/40"
+                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-all duration-300 flex items-center justify-between ${
+                  transportType === "bus" 
+                    ? "bg-[var(--primary)]/10 text-[var(--primary)]" 
+                    : "text-foreground/75 hover:bg-[var(--input)]"
                 }`}
               >
                 <span className="flex items-center space-x-2">
@@ -184,8 +188,10 @@ function TicketsContent() {
               </button>
               <button 
                 onClick={() => handleTypeChange("train")}
-                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-colors flex items-center justify-between ${
-                  transportType === "train" ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400" : "hover:bg-gray-50 dark:hover:bg-slate-800/40"
+                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-all duration-300 flex items-center justify-between ${
+                  transportType === "train" 
+                    ? "bg-[var(--primary)]/10 text-[var(--primary)]" 
+                    : "text-foreground/75 hover:bg-[var(--input)]"
                 }`}
               >
                 <span className="flex items-center space-x-2">
@@ -195,8 +201,10 @@ function TicketsContent() {
               </button>
               <button 
                 onClick={() => handleTypeChange("air")}
-                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-colors flex items-center justify-between ${
-                  transportType === "air" ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400" : "hover:bg-gray-50 dark:hover:bg-slate-800/40"
+                className={`py-2 px-3 text-xs font-semibold rounded-xl text-left transition-all duration-300 flex items-center justify-between ${
+                  transportType === "air" 
+                    ? "bg-[var(--primary)]/10 text-[var(--primary)]" 
+                    : "text-foreground/75 hover:bg-[var(--input)]"
                 }`}
               >
                 <span className="flex items-center space-x-2">
@@ -211,14 +219,14 @@ function TicketsContent() {
         {/* Right Ticket List */}
         <div className="lg:col-span-3 space-y-6">
           {/* Sorting and Count */}
-          <div className="flex justify-between items-center bg-white dark:bg-slate-900 px-6 py-4 border border-gray-150 dark:border-slate-800 rounded-2xl shadow-sm">
-            <span className="text-xs text-gray-500 font-semibold">{total} tickets found</span>
+          <div className="flex justify-between items-center bg-[var(--card)] px-6 py-4 border border-[var(--border)] rounded-2xl shadow-md">
+            <span className="text-xs text-foreground/60 font-semibold">{total} tickets found</span>
             <div className="flex items-center space-x-2">
-              <ArrowUpDown className="w-4 h-4 text-gray-400" />
+              <ArrowUpDown className="w-4 h-4 text-foreground/60" />
               <select
                 value={sort}
                 onChange={handleSortChange}
-                className="bg-transparent text-xs font-semibold focus:outline-none"
+                className="bg-transparent text-xs font-semibold focus:outline-none text-foreground/80"
               >
                 <option value="">Sort by (Date)</option>
                 <option value="asc">Price: Low to High</option>
@@ -231,13 +239,13 @@ function TicketsContent() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-60 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
+                <div key={i} className="h-60 bg-gray-200 dark:bg-slate-805 animate-pulse rounded-2xl" />
               ))}
             </div>
           ) : tickets.length === 0 ? (
-            <div className="text-center py-20 bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800 rounded-3xl shadow-sm">
+            <div className="text-center py-20 bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-md">
               <span className="text-3xl">🎫</span>
-              <p className="text-gray-500 text-sm mt-3 font-medium">No active tickets found matching parameters.</p>
+              <p className="text-foreground/60 text-sm mt-3 font-medium">No active tickets found matching parameters.</p>
             </div>
           ) : (
             <>
@@ -245,51 +253,51 @@ function TicketsContent() {
                 {tickets.map((ticket) => (
                   <div 
                     key={ticket._id}
-                    className="bg-white dark:bg-slate-900 border border-gray-150 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                    className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-md liftup flex flex-col justify-between"
                   >
                     <div className="p-6 space-y-4">
                       <div className="flex justify-between items-start">
-                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 rounded-md inline-flex items-center space-x-1.5">
+                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-[var(--primary)]/10 text-[var(--primary)] rounded-md inline-flex items-center space-x-1.5">
                           {getTransportIcon(ticket.transportType)}
                           <span className="capitalize">{ticket.transportType}</span>
                         </span>
-                        <span className="text-xs font-semibold text-gray-400">
+                        <span className="text-xs font-semibold text-foreground/60">
                           Qty: <strong className={ticket.ticketQuantity < 5 ? "text-red-500" : "text-emerald-500"}>{ticket.ticketQuantity}</strong> left
                         </span>
                       </div>
 
-                      <h3 className="font-extrabold text-lg truncate text-slate-800 dark:text-slate-100">{ticket.title}</h3>
+                      <h3 className="font-extrabold text-lg truncate text-foreground">{ticket.title}</h3>
 
-                      <div className="grid grid-cols-2 gap-4 text-xs bg-gray-50/50 dark:bg-slate-950/50 p-3 rounded-xl border border-gray-100/50 dark:border-slate-800/50">
+                      <div className="grid grid-cols-2 gap-4 text-xs bg-[var(--input)]/50 p-3 rounded-xl border border-[var(--border)]/50">
                         <div className="space-y-1">
-                          <span className="text-gray-400 block text-[10px] uppercase font-bold">From</span>
-                          <span className="font-bold flex items-center text-slate-700 dark:text-slate-200">
-                            <MapPin className="w-3 h-3 mr-1 text-gray-400" />
+                          <span className="text-foreground/50 block text-[10px] uppercase font-bold">From</span>
+                          <span className="font-bold flex items-center text-foreground/80">
+                            <MapPin className="w-3 h-3 mr-1 text-foreground/40" />
                             {ticket.from}
                           </span>
                         </div>
                         <div className="space-y-1">
-                          <span className="text-gray-400 block text-[10px] uppercase font-bold">To</span>
-                          <span className="font-bold flex items-center text-slate-700 dark:text-slate-200">
-                            <MapPin className="w-3 h-3 mr-1 text-gray-400" />
+                          <span className="text-foreground/50 block text-[10px] uppercase font-bold">To</span>
+                          <span className="font-bold flex items-center text-foreground/80">
+                            <MapPin className="w-3 h-3 mr-1 text-foreground/40" />
                             {ticket.to}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-center text-xs pt-1">
-                        <span className="text-gray-400">Departure time:</span>
-                        <span className="font-bold text-slate-600 dark:text-slate-400">
+                        <span className="text-foreground/55">Departure time:</span>
+                        <span className="font-bold text-foreground/80">
                           {new Date(ticket.departureDateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                         </span>
                       </div>
                     </div>
 
-                    <div className="px-6 py-4 bg-gray-50/50 dark:bg-slate-950/30 border-t border-gray-100 dark:border-slate-800/80 flex justify-between items-center">
-                      <span className="text-xl font-black">${ticket.price}</span>
+                    <div className="px-6 py-4 bg-[var(--input)]/40 border-t border-[var(--border)] flex justify-between items-center">
+                      <span className="text-xl font-black text-foreground">${ticket.price}</span>
                       <Link 
                         href={`/tickets/${ticket._id}`}
-                        className="py-1.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl flex items-center space-x-1 transition-all shadow-sm"
+                        className="py-1.5 px-4 bg-[var(--primary)] hover:opacity-95 text-white font-bold text-xs rounded-xl flex items-center space-x-1 transition-all active:scale-95 shadow-md"
                       >
                         <span>See Details</span>
                         <ArrowRight className="w-3.5 h-3.5" />
