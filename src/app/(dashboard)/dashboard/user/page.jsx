@@ -1,7 +1,6 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession, authClient } from "@/lib/auth-client";
+import { useSearchParams } from "next/navigation";
 import CountUp from "@/components/CountUp";
 import { 
   User, Mail, CreditCard, Ticket, Calendar, ShieldCheck, 
@@ -10,8 +9,59 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 
-export default function UserDashboard() {
+function BookingCountdown({ departureDateTime, status }) {
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  useEffect(() => {
+    if (status === "rejected") {
+      setTimeLeft(null);
+      return;
+    }
+
+    const calculateTime = () => {
+      const difference = +new Date(departureDateTime) - +new Date();
+      if (difference <= 0) return null;
+
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    };
+
+    setTimeLeft(calculateTime());
+
+    const timer = setInterval(() => {
+      const remaining = calculateTime();
+      setTimeLeft(remaining);
+      if (!remaining) {
+        clearInterval(timer);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [departureDateTime, status]);
+
+  if (status === "rejected") return null;
+  if (!timeLeft) {
+    return <span className="text-[10px] font-bold text-red-500 uppercase">Boarding Passed</span>;
+  }
+
+  return (
+    <div className="flex items-center space-x-1.5 text-[10px] font-bold text-indigo-500 mt-1">
+      <Clock className="w-3.5 h-3.5 animate-pulse text-[var(--primary)]" />
+      <span>Boarding in:</span>
+      <span className="font-black bg-indigo-50 dark:bg-indigo-950/40 text-[var(--primary)] px-1.5 py-0.5 rounded">
+        {timeLeft.days > 0 ? `${timeLeft.days}d ` : ""}{timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
+      </span>
+    </div>
+  );
+}
+
+function UserDashboardContent() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [bookings, setBookings] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -19,8 +69,7 @@ export default function UserDashboard() {
   const [paymentLoading, setPaymentLoading] = useState("");
   const [error, setError] = useState("");
 
-  // Tab State: "bookings" or "transactions"
-  const [activeTab, setActiveTab] = useState("bookings");
+  const activeTab = searchParams.get("tab") || "profile";
 
   // Pagination states
   const [bookingPage, setBookingPage] = useState(1);
@@ -160,94 +209,6 @@ export default function UserDashboard() {
   return (
     <div className="space-y-10">
       
-      {/* Profile Section */}
-      <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 liftup">
-        <img
-          src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
-          alt={session?.user?.name}
-          className="w-20 h-20 rounded-full object-cover border-4 border-[var(--primary)] shadow-sm"
-        />
-        <div className="text-center sm:text-left space-y-1">
-          <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">{session?.user?.name}</h1>
-          <div className="flex flex-col sm:flex-row sm:space-x-4 text-xs text-gray-500">
-            <span className="flex items-center justify-center sm:justify-start space-x-1">
-              <Mail className="w-3.5 h-3.5 text-[var(--primary)]" />
-              <span>{session?.user?.email}</span>
-            </span>
-            <span className="flex items-center justify-center sm:justify-start space-x-1 uppercase font-bold text-[var(--primary)]">
-              <User className="w-3.5 h-3.5" />
-              <span>{session?.user?.role} Account</span>
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Analytics/Summary Stats (React CountUp) */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Bookings</span>
-            <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
-              {loadingBookings ? "..." : <CountUp end={totalBookingsCount} />}
-            </span>
-          </div>
-          <div className="p-3 bg-[var(--primary)]/10 text-[var(--primary)] rounded-2xl">
-            <Ticket className="w-6 h-6" />
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Paid Bookings</span>
-            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-              {loadingBookings ? "..." : <CountUp end={paidBookingsCount} />}
-            </span>
-          </div>
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Spent</span>
-            <span className="text-3xl font-black text-[var(--accent)]">
-              ${loadingTx ? "..." : <CountUp end={totalAmountSpent} />}
-            </span>
-          </div>
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 text-[var(--accent)] rounded-2xl">
-            <DollarSign className="w-6 h-6" />
-          </div>
-        </div>
-      </section>
-
-      {/* Tabs Navigator */}
-      <div className="flex border-b border-[var(--border)] pb-px">
-        <button
-          onClick={() => setActiveTab("bookings")}
-          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === "bookings"
-              ? "border-[var(--primary)] text-[var(--primary)]"
-              : "border-transparent text-gray-400 hover:text-slate-600"
-          }`}
-        >
-          <Ticket className="w-4 h-4" />
-          <span>My Bookings</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("transactions")}
-          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === "transactions"
-              ? "border-[var(--primary)] text-[var(--primary)]"
-              : "border-transparent text-gray-400 hover:text-slate-600"
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>Payments History</span>
-        </button>
-      </div>
-
-      {/* Error prompt */}
       {error && (
         <Alert variant="destructive" className="liftup">
           <ShieldAlert className="w-4 h-4" />
@@ -256,9 +217,80 @@ export default function UserDashboard() {
         </Alert>
       )}
 
-      {/* Tab 1 Content: Bookings */}
+      {/* 1. Profile Workspace Tab */}
+      {activeTab === "profile" && (
+        <>
+          <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 liftup">
+            <img
+              src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
+              alt={session?.user?.name}
+              className="w-20 h-20 rounded-full object-cover border-4 border-[var(--primary)] shadow-sm"
+            />
+            <div className="text-center sm:text-left space-y-1">
+              <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">{session?.user?.name}</h1>
+              <div className="flex flex-col sm:flex-row sm:space-x-4 text-xs text-gray-500">
+                <span className="flex items-center justify-center sm:justify-start space-x-1">
+                  <Mail className="w-3.5 h-3.5 text-[var(--primary)]" />
+                  <span>{session?.user?.email}</span>
+                </span>
+                <span className="flex items-center justify-center sm:justify-start space-x-1 uppercase font-bold text-[var(--primary)]">
+                  <User className="w-3.5 h-3.5" />
+                  <span>{session?.user?.role} Account</span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Bookings</span>
+                <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
+                  {loadingBookings ? "..." : <CountUp end={totalBookingsCount} />}
+                </span>
+              </div>
+              <div className="p-3 bg-[var(--primary)]/10 text-[var(--primary)] rounded-2xl">
+                <Ticket className="w-6 h-6" />
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Paid Bookings</span>
+                <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                  {loadingBookings ? "..." : <CountUp end={paidBookingsCount} />}
+                </span>
+              </div>
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Spent</span>
+                <span className="text-3xl font-black text-[var(--accent)]">
+                  ${loadingTx ? "..." : <CountUp end={totalAmountSpent} />}
+                </span>
+              </div>
+              <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 text-[var(--accent)] rounded-2xl">
+                <DollarSign className="w-6 h-6" />
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* 2. Booked Tickets Tab */}
       {activeTab === "bookings" && (
         <section className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+              <Ticket className="w-5 h-5 text-[var(--primary)]" />
+              <span>My Booked Tickets</span>
+            </h2>
+          </div>
+
           {loadingBookings ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
               {[...Array(3)].map((_, i) => (
@@ -287,9 +319,13 @@ export default function UserDashboard() {
 
                       <div className="space-y-1">
                         <h3 className="font-extrabold text-sm truncate text-slate-800 dark:text-slate-100">{booking.ticketTitle}</h3>
-                        <div className="flex items-center space-x-1.5 text-xs text-gray-500">
-                          <Calendar className="w-3.5 h-3.5 text-[var(--primary)]" />
-                          <span>{new Date(booking.departureDateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                        <div className="flex flex-col space-y-1.5">
+                          <div className="flex items-center space-x-1.5 text-xs text-gray-500">
+                            <Calendar className="w-3.5 h-3.5 text-[var(--primary)]" />
+                            <span>{new Date(booking.departureDateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                          </div>
+                          {/* Live Countdown */}
+                          <BookingCountdown departureDateTime={booking.departureDateTime} status={booking.status} />
                         </div>
                       </div>
                     </div>
@@ -302,20 +338,29 @@ export default function UserDashboard() {
 
                       {/* Stripe Pay button */}
                       {booking.status === "accepted" && (
-                        <button
-                          onClick={() => handlePayNow(booking._id)}
-                          disabled={paymentLoading === booking._id}
-                          className="w-full py-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-1 shadow-md transition-colors"
-                        >
-                          {paymentLoading === booking._id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        (() => {
+                          const isExpired = new Date(booking.departureDateTime) < new Date();
+                          return isExpired ? (
+                            <span className="w-full text-center py-2 bg-gray-100 dark:bg-slate-805 text-gray-400 font-bold text-xs rounded-xl block border border-gray-200/50 dark:border-slate-800/50">
+                              Locked (Departure Passed)
+                            </span>
                           ) : (
-                            <>
-                              <CreditCard className="w-3.5 h-3.5" />
-                              <span>Pay Now</span>
-                            </>
-                          )}
-                        </button>
+                            <button
+                              onClick={() => handlePayNow(booking._id)}
+                              disabled={paymentLoading === booking._id}
+                              className="w-full py-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-1 shadow-md transition-colors"
+                            >
+                              {paymentLoading === booking._id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <CreditCard className="w-3.5 h-3.5" />
+                                  <span>Pay Now</span>
+                                </>
+                              )}
+                            </button>
+                          );
+                        })()
                       )}
                     </div>
                   </div>
@@ -349,9 +394,16 @@ export default function UserDashboard() {
         </section>
       )}
 
-      {/* Tab 2 Content: Transactions */}
+      {/* 3. Payments History Tab */}
       {activeTab === "transactions" && (
         <section className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+              <ShieldCheck className="w-5 h-5 text-[var(--primary)]" />
+              <span>Payments Transaction History</span>
+            </h2>
+          </div>
+
           {loadingTx ? (
             <div className="h-32 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
           ) : transactions.length === 0 ? (
@@ -413,5 +465,17 @@ export default function UserDashboard() {
       )}
 
     </div>
+  );
+}
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <UserDashboardContent />
+    </Suspense>
   );
 }
