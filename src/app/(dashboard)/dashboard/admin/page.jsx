@@ -1,26 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSession, authClient } from "@/lib/auth-client";
 import CountUp from "@/components/CountUp";
-import { 
-  User, Mail, Shield, ShieldAlert, CheckCircle, XCircle, 
-  ToggleLeft, ToggleRight, AlertTriangle, ShieldCheck, Ticket, Users, Sparkles
+import {
+  User, Mail, Shield, ShieldAlert, CheckCircle, XCircle,
+  ToggleLeft, ToggleRight, AlertTriangle, ShieldCheck, Ticket, Users, Sparkles,
+  TrendingUp, Clock, Eye, Ban, Search, ChevronLeft, ChevronRight,
+  BarChart3, Activity, Globe, Calendar, Filter
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const [users, setUsers] = useState([]);
   const [tickets, setTickets] = useState([]);
-  
+
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [actionLoading, setActionLoading] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Search & filter states
+  const [ticketSearch, setTicketSearch] = useState("");
+  const [ticketStatusFilter, setTicketStatusFilter] = useState("all");
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
 
   // Alert Dialog State
   const [confirmDialog, setConfirmDialog] = useState({
@@ -32,39 +42,35 @@ export default function AdminDashboard() {
   });
 
   const triggerConfirm = ({ title, description, onConfirm, variant = "default" }) => {
-    setConfirmDialog({
-      isOpen: true,
-      title,
-      description,
-      onConfirm,
-      variant
-    });
+    setConfirmDialog({ isOpen: true, title, description, onConfirm, variant });
   };
 
-  // Tab State: "tickets" | "users"
-  const [activeTab, setActiveTab] = useState("tickets");
+  // Tab State via Search Params (matching sidebar)
+  const activeTab = searchParams.get("tab") || "profile";
 
   // Pagination states
   const [ticketPage, setTicketPage] = useState(1);
   const [userPage, setUserPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
+
+  const getToken = async () => {
+    try {
+      const tokenRes = await authClient.token();
+      return tokenRes?.data?.token || "";
+    } catch (e) {
+      console.error("Error retrieving JWT token:", e);
+      return "";
+    }
+  };
 
   const fetchData = async () => {
     if (!session?.user) return;
-    let token = "";
-    try {
-      const tokenRes = await authClient.token();
-      token = tokenRes?.data?.token || "";
-    } catch (e) {
-      console.error("Error retrieving JWT token:", e);
-    }
+    const token = await getToken();
 
-    // 1. Fetch all users
+    // Fetch all users
     try {
       const usersRes = await fetch("http://localhost:5000/api/admin/users", {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
+        headers: { "Authorization": `Bearer ${token}` }
       });
       if (usersRes.ok) {
         const usersData = await usersRes.json();
@@ -76,12 +82,10 @@ export default function AdminDashboard() {
       setLoadingUsers(false);
     }
 
-    // 2. Fetch all tickets
+    // Fetch all tickets
     try {
       const ticketsRes = await fetch("http://localhost:5000/api/admin/tickets", {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
+        headers: { "Authorization": `Bearer ${token}` }
       });
       if (ticketsRes.ok) {
         const ticketsData = await ticketsRes.json();
@@ -98,34 +102,24 @@ export default function AdminDashboard() {
     fetchData();
   }, [session]);
 
+  // Reset pagination when switching tabs or filters
+  useEffect(() => { setTicketPage(1); }, [ticketSearch, ticketStatusFilter]);
+  useEffect(() => { setUserPage(1); }, [userSearch, userRoleFilter]);
+
   const handleTicketStatus = async (ticketId, status) => {
     setError("");
     setSuccess("");
     setActionLoading(ticketId);
-
     try {
-      let token = "";
-      try {
-        const tokenRes = await authClient.token();
-        token = tokenRes?.data?.token || "";
-      } catch (e) {
-        console.error("Error retrieving JWT token:", e);
-      }
+      const token = await getToken();
       const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ status }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to moderate ticket.");
-      }
-
-      const successMsg = `Ticket status successfully updated to ${status}`;
+      if (!res.ok) throw new Error(data.error || "Failed to moderate ticket.");
+      const successMsg = `Ticket ${status} successfully`;
       setSuccess(successMsg);
       toast.success(successMsg);
       fetchData();
@@ -142,30 +136,16 @@ export default function AdminDashboard() {
     setError("");
     setSuccess("");
     setActionLoading(ticketId + "_ad");
-
     try {
-      let token = "";
-      try {
-        const tokenRes = await authClient.token();
-        token = tokenRes?.data?.token || "";
-      } catch (e) {
-        console.error("Error retrieving JWT token:", e);
-      }
+      const token = await getToken();
       const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ isAdvertised: !currentAdState }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to update advertisement slot.");
-      }
-
-      const successMsg = `Ticket advertisement state updated successfully.`;
+      if (!res.ok) throw new Error(data.error || "Failed to update advertisement slot.");
+      const successMsg = `Advertisement ${!currentAdState ? "enabled" : "disabled"} successfully.`;
       setSuccess(successMsg);
       toast.success(successMsg);
       fetchData();
@@ -182,30 +162,16 @@ export default function AdminDashboard() {
     setError("");
     setSuccess("");
     setActionLoading(userId + "_role");
-
     try {
-      let token = "";
-      try {
-        const tokenRes = await authClient.token();
-        token = tokenRes?.data?.token || "";
-      } catch (e) {
-        console.error("Error retrieving JWT token:", e);
-      }
+      const token = await getToken();
       const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ role: newRole }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to change user role.");
-      }
-
-      const msg = "User role updated successfully.";
+      if (!res.ok) throw new Error(data.error || "Failed to change user role.");
+      const msg = `User role changed to ${newRole}.`;
       setSuccess(msg);
       toast.success(msg);
       fetchData();
@@ -221,50 +187,24 @@ export default function AdminDashboard() {
   const handleRoleChange = (userId, newRole) => {
     triggerConfirm({
       title: "Change User Role?",
-      description: `Are you sure you want to change this user's system role to ${newRole}? This will alter their permission sets immediately.`,
+      description: `Are you sure you want to change this user's role to "${newRole}"? This will alter their permissions immediately.`,
       onConfirm: () => executeRoleChange(userId, newRole),
     });
   };
-
-  const handleFraudToggle = (userId, currentFraudState) => {
-    triggerConfirm({
-      title: currentFraudState ? "Clear Fraud Flag?" : "Mark as Fraud?",
-      description: currentFraudState
-        ? "Are you sure you want to clear the fraud flag for this user? They will be allowed to perform operations again."
-        : "Are you sure you want to flag this user as fraud? They will be blocked from performing operations and their active tickets will be filtered out.",
-      variant: currentFraudState ? "default" : "destructive",
-      onConfirm: () => executeFraudToggle(userId, currentFraudState),
-    });
-  };
-
 
   const executeFraudToggle = async (userId, currentFraudState) => {
     setError("");
     setSuccess("");
     setActionLoading(userId + "_fraud");
-
     try {
-      let token = "";
-      try {
-        const tokenRes = await authClient.token();
-        token = tokenRes?.data?.token || "";
-      } catch (e) {
-        console.error("Error retrieving JWT token:", e);
-      }
+      const token = await getToken();
       const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ isFraud: !currentFraudState }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to update fraud flag.");
-      }
-
+      if (!res.ok) throw new Error(data.error || "Failed to update fraud flag.");
       const msg = `Fraud status updated successfully.`;
       setSuccess(msg);
       toast.success(msg);
@@ -278,258 +218,400 @@ export default function AdminDashboard() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "approved":
-        return <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 rounded-lg">Approved</span>;
-      case "rejected":
-        return <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600 rounded-lg">Rejected</span>;
-      default:
-        return <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-yellow-50 text-yellow-600 rounded-lg">Pending Review</span>;
-    }
+  const handleFraudToggle = (userId, currentFraudState) => {
+    triggerConfirm({
+      title: currentFraudState ? "Clear Fraud Flag?" : "Mark as Fraud?",
+      description: currentFraudState
+        ? "Clear fraud flag? User will regain full access."
+        : "Flag as fraud? User will be blocked from all operations.",
+      variant: currentFraudState ? "default" : "destructive",
+      onConfirm: () => executeFraudToggle(userId, currentFraudState),
+    });
   };
 
-  // Math for stats cards
+  // ---- Status badge helper ----
+  const getStatusBadge = (status) => {
+    const styles = {
+      approved: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+      rejected: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+      pending: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    };
+    const labels = { approved: "Approved", rejected: "Rejected", pending: "Pending" };
+    const s = status || "pending";
+    return (
+      <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${styles[s] || styles.pending}`}>
+        {s === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
+        {s === "rejected" && <XCircle className="w-3 h-3 mr-1" />}
+        {s === "pending" && <Clock className="w-3 h-3 mr-1" />}
+        {labels[s] || "Pending"}
+      </span>
+    );
+  };
+
+  // ---- Computed stats ----
   const totalTicketsCount = tickets.length;
+  const approvedCount = tickets.filter(t => t.status === "approved").length;
+  const pendingCount = tickets.filter(t => t.status === "pending").length;
+  const rejectedCount = tickets.filter(t => t.status === "rejected").length;
   const activeAdsCount = tickets.filter(t => t.isAdvertised && t.status === "approved").length;
   const totalUsersCount = users.length;
+  const vendorCount = users.filter(u => u.role === "vendor").length;
+  const adminCount = users.filter(u => u.role === "admin").length;
   const fraudUsersCount = users.filter(u => u.isFraud).length;
 
-  // Pagination filters
-  const indexOfLastTicket = ticketPage * itemsPerPage;
-  const indexOfFirstTicket = indexOfLastTicket - itemsPerPage;
-  const currentTickets = tickets.slice(indexOfFirstTicket, indexOfLastTicket);
-  const totalTicketPages = Math.ceil(tickets.length / itemsPerPage);
+  // ---- Filtered / paginated tickets ----
+  const filteredTickets = tickets.filter(t => {
+    const matchesSearch = !ticketSearch || 
+      t.title?.toLowerCase().includes(ticketSearch.toLowerCase()) ||
+      t.from?.toLowerCase().includes(ticketSearch.toLowerCase()) ||
+      t.to?.toLowerCase().includes(ticketSearch.toLowerCase());
+    const matchesStatus = ticketStatusFilter === "all" || t.status === ticketStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+  const totalTicketPages = Math.ceil(filteredTickets.length / itemsPerPage);
+  const currentTickets = filteredTickets.slice((ticketPage - 1) * itemsPerPage, ticketPage * itemsPerPage);
 
-  const indexOfLastUser = userPage * itemsPerPage;
-  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
-  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
-  const totalUserPages = Math.ceil(users.length / itemsPerPage);
+  // ---- Filtered / paginated users ----
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = !userSearch ||
+      u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email?.toLowerCase().includes(userSearch.toLowerCase());
+    const matchesRole = userRoleFilter === "all" || u.role === userRoleFilter;
+    return matchesSearch && matchesRole;
+  });
+  const totalUserPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const currentUsers = filteredUsers.slice((userPage - 1) * itemsPerPage, userPage * itemsPerPage);
 
-  return (
-    <div className="space-y-10">
-      
-      {/* Profile Banner */}
-      <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 liftup">
-        <img
-          src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
-          alt={session?.user?.name}
-          className="w-16 h-16 rounded-full object-cover border-4 border-[var(--primary)] shadow-sm"
-        />
-        <div className="text-center sm:text-left space-y-1">
-          <h1 className="text-xl font-black text-slate-800 dark:text-slate-100">{session?.user?.name}</h1>
-          <div className="flex flex-col sm:flex-row sm:space-x-4 text-xs text-gray-500">
-            <span className="flex items-center justify-center sm:justify-start space-x-1">
-              <Mail className="w-3.5 h-3.5 text-[var(--primary)]" />
-              <span>{session?.user?.email}</span>
-            </span>
-            <span className="flex items-center justify-center sm:justify-start space-x-1 uppercase font-bold text-[var(--primary)]">
-              <Shield className="w-3.5 h-3.5" />
-              <span>{session?.user?.role} Portal</span>
-            </span>
-          </div>
-        </div>
-      </section>
+  // ---- Advertise tab: only approved tickets ----
+  const approvedTickets = tickets.filter(t => t.status === "approved");
+  const [adPage, setAdPage] = useState(1);
+  const adPerPage = 6;
+  const totalAdPages = Math.ceil(approvedTickets.length / adPerPage);
+  const currentAdTickets = approvedTickets.slice((adPage - 1) * adPerPage, adPage * adPerPage);
 
-      {/* Analytics Summary Stats (React CountUp) */}
-      <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Routes</span>
-            <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
-              {loadingTickets ? "..." : <CountUp end={totalTicketsCount} />}
-            </span>
-          </div>
-          <div className="p-3 bg-[var(--primary)]/10 text-[var(--primary)] rounded-2xl">
-            <Ticket className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Advertisements</span>
-            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-              {loadingTickets ? "..." : <CountUp end={activeAdsCount} />}
-            </span>
-          </div>
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-2xl">
-            <Sparkles className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Platform Users</span>
-            <span className="text-3xl font-black text-[var(--accent)]">
-              {loadingUsers ? "..." : <CountUp end={totalUsersCount} />}
-            </span>
-          </div>
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 text-[var(--accent)] rounded-2xl">
-            <Users className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm flex items-center justify-between liftup">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Fraud Flagged</span>
-            <span className="text-3xl font-black text-red-650 dark:text-red-400">
-              {loadingUsers ? "..." : <CountUp end={fraudUsersCount} />}
-            </span>
-          </div>
-          <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-2xl">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
-      </section>
-
-      {/* Tabs Selector */}
-      <div className="flex border-b border-[var(--border)] pb-px">
+  // ---- Reusable Pagination Component ----
+  const Pagination = ({ page, totalPages, setPage }) => {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex items-center justify-center gap-2 pt-6">
         <button
-          onClick={() => setActiveTab("tickets")}
-          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === "tickets"
-              ? "border-[var(--primary)] text-[var(--primary)]"
-              : "border-transparent text-gray-400 hover:text-slate-600"
-          }`}
+          onClick={() => setPage(p => Math.max(p - 1, 1))}
+          disabled={page === 1}
+          className="p-2 rounded-xl border border-[var(--border)] bg-white dark:bg-slate-900 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
-          <Ticket className="w-4 h-4" />
-          <span>Tickets Moderation</span>
+          <ChevronLeft className="w-4 h-4" />
         </button>
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+          <button
+            key={p}
+            onClick={() => setPage(p)}
+            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
+              p === page
+                ? "bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/25"
+                : "border border-[var(--border)] bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-500"
+            }`}
+          >
+            {p}
+          </button>
+        ))}
         <button
-          onClick={() => setActiveTab("users")}
-          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === "users"
-              ? "border-[var(--primary)] text-[var(--primary)]"
-              : "border-transparent text-gray-400 hover:text-slate-600"
-          }`}
+          onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+          disabled={page === totalPages}
+          className="p-2 rounded-xl border border-[var(--border)] bg-white dark:bg-slate-900 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
-          <User className="w-4 h-4" />
-          <span>Accounts Moderation</span>
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
+    );
+  };
+
+  // ---- Skeleton loader ----
+  const SkeletonRows = ({ count = 4 }) => (
+    <div className="space-y-3">
+      {[...Array(count)].map((_, i) => (
+        <div key={i} className="h-16 bg-gray-100 dark:bg-slate-800/50 rounded-2xl animate-pulse" />
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="space-y-8">
 
       {/* Error/Success alerts */}
       {error && (
-        <Alert variant="destructive" className="liftup">
+        <Alert variant="destructive">
           <ShieldAlert className="w-4 h-4" />
-          <AlertTitle>Admin error</AlertTitle>
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-
       {success && (
-        <Alert className="border-emerald-250 bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600 animate-pulse liftup">
+        <Alert className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600">
           <CheckCircle className="w-4 h-4 text-emerald-500" />
-          <AlertTitle>Operation Success</AlertTitle>
+          <AlertTitle>Success</AlertTitle>
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
 
-      {/* Tab 1 Content: Tickets Moderation */}
+      {/* ============ TAB 1: ADMIN PROFILE ============ */}
+      {activeTab === "profile" && (
+        <div className="space-y-8">
+          
+          {/* Admin Profile Banner */}
+          <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 rounded-3xl p-8 shadow-2xl">
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--primary)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+            </div>
+            <div className="relative flex flex-col sm:flex-row items-center gap-6">
+              <div className="relative">
+                <img
+                  src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
+                  alt={session?.user?.name}
+                  className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-xl"
+                />
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg flex items-center justify-center border-2 border-slate-900">
+                  <ShieldCheck className="w-3 h-3 text-white" />
+                </div>
+              </div>
+              <div className="text-center sm:text-left space-y-1">
+                <h1 className="text-2xl font-black text-white">{session?.user?.name}</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-sm text-slate-300">
+                    <Mail className="w-3.5 h-3.5" />
+                    {session?.user?.email}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--primary)]/20 text-[var(--primary)] rounded-full text-xs font-bold uppercase tracking-wider">
+                    <Shield className="w-3 h-3" />
+                    System Administrator
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Overview Stats Grid */}
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Total Routes", value: totalTicketsCount, icon: Ticket, color: "var(--primary)", bgColor: "var(--primary)" },
+              { label: "Platform Users", value: totalUsersCount, icon: Users, color: "#6366f1", bgColor: "#6366f1" },
+              { label: "Active Ads", value: activeAdsCount, icon: Sparkles, color: "#10b981", bgColor: "#10b981" },
+              { label: "Fraud Flagged", value: fraudUsersCount, icon: AlertTriangle, color: "#ef4444", bgColor: "#ef4444" },
+            ].map((stat, i) => (
+              <div key={i} className="group bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">{stat.label}</span>
+                    <span className="text-3xl font-black" style={{ color: stat.color }}>
+                      {(loadingTickets && i < 2) || (loadingUsers && i >= 1) ? "..." : <CountUp end={stat.value} />}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl transition-colors" style={{ backgroundColor: stat.bgColor + "15" }}>
+                    <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          {/* Ticket Status Breakdown */}
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Approved</span>
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
+              </div>
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                {loadingTickets ? "..." : <CountUp end={approvedCount} />}
+              </span>
+              <div className="mt-3 h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                  style={{ width: totalTicketsCount ? `${(approvedCount / totalTicketsCount) * 100}%` : "0%" }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Review</span>
+                <Clock className="w-4 h-4 text-amber-500" />
+              </div>
+              <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
+                {loadingTickets ? "..." : <CountUp end={pendingCount} />}
+              </span>
+              <div className="mt-3 h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-amber-500 rounded-full transition-all duration-1000"
+                  style={{ width: totalTicketsCount ? `${(pendingCount / totalTicketsCount) * 100}%` : "0%" }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Rejected</span>
+                <XCircle className="w-4 h-4 text-red-500" />
+              </div>
+              <span className="text-2xl font-black text-red-600 dark:text-red-400">
+                {loadingTickets ? "..." : <CountUp end={rejectedCount} />}
+              </span>
+              <div className="mt-3 h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-red-500 rounded-full transition-all duration-1000"
+                  style={{ width: totalTicketsCount ? `${(rejectedCount / totalTicketsCount) * 100}%` : "0%" }}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* User Role Breakdown */}
+          <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-5 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[var(--primary)]" />
+              User Role Distribution
+            </h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "Regular Users", count: totalUsersCount - vendorCount - adminCount, color: "#6366f1" },
+                { label: "Vendors", count: vendorCount, color: "#10b981" },
+                { label: "Admins", count: adminCount, color: "#f59e0b" },
+              ].map((role, i) => (
+                <div key={i} className="text-center p-4 rounded-xl bg-gray-50 dark:bg-slate-800/50">
+                  <span className="text-2xl font-black block" style={{ color: role.color }}>
+                    {loadingUsers ? "..." : <CountUp end={role.count} />}
+                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1 block">{role.label}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* ============ TAB 2: MANAGE TICKETS ============ */}
       {activeTab === "tickets" && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-extrabold flex items-center space-x-2 text-slate-800 dark:text-slate-200">
-            <Shield className="w-5 h-5 text-[var(--primary)]" />
-            <span>Manage Platform Tickets</span>
-          </h2>
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-[var(--primary)]" />
+              Manage Platform Tickets
+              <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+                {filteredTickets.length}
+              </span>
+            </h2>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by title, from, to..."
+                value={ticketSearch}
+                onChange={(e) => setTicketSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <select
+                value={ticketStatusFilter}
+                onChange={(e) => setTicketStatusFilter(e.target.value)}
+                className="px-3 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
 
           {loadingTickets ? (
-            <div className="h-44 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
-          ) : tickets.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-12 text-center text-gray-500 text-sm font-medium liftup">
-              No tickets listed on the platform yet.
+            <SkeletonRows count={5} />
+          ) : filteredTickets.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-12 text-center">
+              <Ticket className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 font-medium">No tickets found.</p>
             </div>
           ) : (
             <>
-              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm liftup">
+              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                  <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)] font-bold uppercase tracking-wider text-gray-500">
-                        <th className="p-4">Route Info</th>
-                        <th className="p-4">Pricing & Seat Details</th>
-                        <th className="p-4">Approval State</th>
-                        <th className="p-4">Ad Slot</th>
-                        <th className="p-4">Actions</th>
+                      <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)]">
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Route</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Type</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Price</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Seats</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Status</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium">
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
                       {currentTickets.map((t) => (
-                        <tr key={t._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
+                        <tr key={t._id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
                           <td className="p-4">
-                            <span className="font-bold text-slate-800 dark:text-slate-200 block">{t.title}</span>
-                            <span className="text-[10px] text-gray-400 block">{t.from} ➔ {t.to} | <span className="capitalize">{t.transportType}</span></span>
+                            <div className="flex items-center gap-3">
+                              {t.image && (
+                                <img src={t.image} alt="" className="w-10 h-10 rounded-xl object-cover border border-[var(--border)]/30" />
+                              )}
+                              <div>
+                                <span className="font-bold text-slate-800 dark:text-slate-200 block">{t.title}</span>
+                                <span className="text-[10px] text-gray-400 block">{t.from} → {t.to}</span>
+                              </div>
+                            </div>
                           </td>
                           <td className="p-4">
-                            <span className="font-bold text-slate-800 dark:text-slate-100 block">${t.price} USD</span>
-                            <span className="text-[10px] text-gray-400 block">{t.ticketQuantity} available seats</span>
+                            <span className="px-2 py-1 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                              {t.transportType}
+                            </span>
                           </td>
+                          <td className="p-4 font-bold text-slate-800 dark:text-slate-100">${t.price}</td>
+                          <td className="p-4 text-gray-500 font-medium">{t.ticketQuantity}</td>
                           <td className="p-4">{getStatusBadge(t.status)}</td>
                           <td className="p-4">
-                            {t.status === "approved" ? (
-                              <button
-                                onClick={() => handleAdToggle(t._id, t.isAdvertised)}
-                                disabled={actionLoading === t._id + "_ad"}
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl"
-                                title="Toggle Homepage Advertisement"
-                              >
-                                {t.isAdvertised ? (
-                                  <div className="flex items-center space-x-1 text-[var(--primary)] font-bold">
-                                    <ToggleRight className="w-7 h-7" />
-                                    <span>Advertised</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center space-x-1 text-gray-405">
-                                    <ToggleLeft className="w-7 h-7" />
-                                    <span>Draft</span>
-                                  </div>
-                                )}
-                              </button>
-                            ) : (
-                              <span className="text-gray-400 italic">Approve first</span>
-                            )}
-                          </td>
-                          <td className="p-4">
-                            {t.status === "pending" && (
-                              <div className="flex items-center space-x-2">
-                                <button
-                                  onClick={() => handleTicketStatus(t._id, "approved")}
-                                  disabled={actionLoading === t._id}
-                                  className="px-2.5 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-lg flex items-center space-x-1"
-                                >
-                                  <CheckCircle className="w-3.5 h-3.5" />
-                                  <span>Approve</span>
-                                </button>
+                            <div className="flex items-center gap-2">
+                              {t.status === "pending" && (
+                                <>
+                                  <button
+                                    onClick={() => handleTicketStatus(t._id, "approved")}
+                                    disabled={actionLoading === t._id}
+                                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors disabled:opacity-50"
+                                  >
+                                    <CheckCircle className="w-3 h-3" /> Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleTicketStatus(t._id, "rejected")}
+                                    disabled={actionLoading === t._id}
+                                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border border-red-500/20 disabled:opacity-50"
+                                  >
+                                    <XCircle className="w-3 h-3" /> Reject
+                                  </button>
+                                </>
+                              )}
+                              {t.status === "approved" && (
                                 <button
                                   onClick={() => handleTicketStatus(t._id, "rejected")}
                                   disabled={actionLoading === t._id}
-                                  className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg flex items-center space-x-1 border border-red-100"
+                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border border-red-500/20 disabled:opacity-50"
                                 >
-                                  <XCircle className="w-3.5 h-3.5" />
-                                  <span>Reject</span>
+                                  <Ban className="w-3 h-3" /> Revoke
                                 </button>
-                              </div>
-                            )}
-                            {t.status === "approved" && (
-                              <button
-                                onClick={() => handleTicketStatus(t._id, "rejected")}
-                                disabled={actionLoading === t._id}
-                                className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg flex items-center space-x-1 border border-red-100"
-                              >
-                                <XCircle className="w-3.5 h-3.5" />
-                                <span>Revoke / Reject</span>
-                              </button>
-                            )}
-                            {t.status === "rejected" && (
-                              <button
-                                onClick={() => handleTicketStatus(t._id, "approved")}
-                                disabled={actionLoading === t._id}
-                                className="px-2.5 py-1.5 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] rounded-lg flex items-center space-x-1 border border-[var(--primary)]/20"
-                              >
-                                <CheckCircle className="w-3.5 h-3.5" />
-                                <span>Approve Ticket</span>
-                              </button>
-                            )}
+                              )}
+                              {t.status === "rejected" && (
+                                <button
+                                  onClick={() => handleTicketStatus(t._id, "approved")}
+                                  disabled={actionLoading === t._id}
+                                  className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border border-emerald-500/20 disabled:opacity-50"
+                                >
+                                  <CheckCircle className="w-3 h-3" /> Approve
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -537,73 +619,111 @@ export default function AdminDashboard() {
                   </table>
                 </div>
               </div>
-
-              {/* Ticket list pagination */}
-              {totalTicketPages > 1 && (
-                <div className="flex justify-center items-center space-x-4 pt-2">
-                  <button
-                    onClick={() => setTicketPage(prev => Math.max(prev - 1, 1))}
-                    disabled={ticketPage === 1}
-                    className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-xs font-bold text-gray-500">
-                    Page {ticketPage} of {totalTicketPages}
-                  </span>
-                  <button
-                    onClick={() => setTicketPage(prev => Math.min(prev + 1, totalTicketPages))}
-                    disabled={ticketPage === totalTicketPages}
-                    className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+              <Pagination page={ticketPage} totalPages={totalTicketPages} setPage={setTicketPage} />
             </>
           )}
-        </section>
+        </div>
       )}
 
-      {/* Tab 2 Content: Accounts Moderation */}
+      {/* ============ TAB 3: MANAGE USERS ============ */}
       {activeTab === "users" && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-extrabold flex items-center space-x-2 text-slate-800 dark:text-slate-200">
-            <User className="w-5 h-5 text-[var(--primary)]" />
-            <span>Manage Platform Users</span>
-          </h2>
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Users className="w-5 h-5 text-[var(--primary)]" />
+              Manage Platform Users
+              <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+                {filteredUsers.length}
+              </span>
+            </h2>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <select
+                value={userRoleFilter}
+                onChange={(e) => setUserRoleFilter(e.target.value)}
+                className="px-3 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+              >
+                <option value="all">All Roles</option>
+                <option value="user">Users</option>
+                <option value="vendor">Vendors</option>
+                <option value="admin">Admins</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Total", value: totalUsersCount, color: "#6366f1" },
+              { label: "Vendors", value: vendorCount, color: "#10b981" },
+              { label: "Admins", value: adminCount, color: "#f59e0b" },
+              { label: "Flagged", value: fraudUsersCount, color: "#ef4444" },
+            ].map((s, i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl p-3 text-center">
+                <span className="text-xl font-black block" style={{ color: s.color }}>
+                  {loadingUsers ? "..." : <CountUp end={s.value} />}
+                </span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{s.label}</span>
+              </div>
+            ))}
+          </div>
 
           {loadingUsers ? (
-            <div className="h-44 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
+            <SkeletonRows count={5} />
+          ) : filteredUsers.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-12 text-center">
+              <Users className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 font-medium">No users found.</p>
+            </div>
           ) : (
             <>
-              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm liftup">
+              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                  <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)] font-bold uppercase tracking-wider text-gray-500">
-                        <th className="p-4">User profile</th>
-                        <th className="p-4">System Role</th>
-                        <th className="p-4">Fraud Status</th>
-                        <th className="p-4">Actions</th>
+                      <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)]">
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">User</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Role</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Fraud Status</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium">
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
                       {currentUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
-                          <td className="p-4 flex items-center space-x-3">
-                            <img src={u.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"} className="w-8 h-8 rounded-full object-cover border border-[var(--border)]" />
-                            <div>
-                              <span className="font-bold text-slate-800 dark:text-slate-200 block">{u.name}</span>
-                              <span className="text-[10px] text-gray-400 block">{u.email}</span>
+                        <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={u.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
+                                className="w-9 h-9 rounded-xl object-cover border border-[var(--border)]"
+                                alt=""
+                              />
+                              <div>
+                                <span className="font-bold text-slate-800 dark:text-slate-200 block">{u.name}</span>
+                                <span className="text-[10px] text-gray-400 block">{u.email}</span>
+                              </div>
                             </div>
                           </td>
                           <td className="p-4">
                             <select
                               value={u.role || "user"}
-                              disabled={actionLoading === u.id + "_role" || u.id === session.user.id}
+                              disabled={actionLoading === u.id + "_role" || u.id === session?.user?.id}
                               onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                              className="bg-gray-50 dark:bg-slate-950 px-2 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold focus:outline-none"
+                              className="bg-gray-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-[var(--border)] text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <option value="user">User</option>
                               <option value="vendor">Vendor</option>
@@ -612,30 +732,33 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-4">
                             {u.isFraud ? (
-                              <span className="px-2.5 py-1 text-[10px] font-bold uppercase bg-red-50 text-red-600 rounded-md inline-flex items-center space-x-1 border border-red-100">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 dark:text-red-400 rounded-full border border-red-500/20">
                                 <AlertTriangle className="w-3 h-3" />
-                                <span>FRAUD FLAGGED</span>
+                                FRAUD
                               </span>
                             ) : (
-                              <span className="px-2.5 py-1 text-[10px] font-bold uppercase bg-emerald-50 text-emerald-600 rounded-md border border-emerald-100">Clean Account</span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
+                                <ShieldCheck className="w-3 h-3" />
+                                Clean
+                              </span>
                             )}
                           </td>
                           <td className="p-4">
-                            {u.id !== session.user.id ? (
+                            {u.id !== session?.user?.id ? (
                               <button
                                 onClick={() => handleFraudToggle(u.id, u.isFraud)}
                                 disabled={actionLoading === u.id + "_fraud"}
-                                className={`px-3 py-1.5 font-bold text-xs rounded-xl flex items-center space-x-1 border transition-colors ${
-                                  u.isFraud 
-                                    ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-100"
-                                    : "bg-red-50 hover:bg-red-100 text-red-600 border-red-100"
+                                className={`px-3 py-1.5 font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center gap-1 border transition-colors disabled:opacity-50 ${
+                                  u.isFraud
+                                    ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 border-emerald-500/20"
+                                    : "bg-red-500/10 hover:bg-red-500/20 text-red-600 border-red-500/20"
                                 }`}
                               >
-                                <AlertTriangle className="w-3.5 h-3.5" />
-                                <span>{u.isFraud ? "Clear Fraud Flag" : "Mark as Fraud"}</span>
+                                <AlertTriangle className="w-3 h-3" />
+                                {u.isFraud ? "Clear Flag" : "Flag Fraud"}
                               </button>
                             ) : (
-                              <span className="text-gray-400 italic">Self Account</span>
+                              <span className="text-[10px] text-gray-400 italic font-medium">Your Account</span>
                             )}
                           </td>
                         </tr>
@@ -644,32 +767,123 @@ export default function AdminDashboard() {
                   </table>
                 </div>
               </div>
-
-              {/* Users list pagination */}
-              {totalUserPages > 1 && (
-                <div className="flex justify-center items-center space-x-4 pt-2">
-                  <button
-                    onClick={() => setUserPage(prev => Math.max(prev - 1, 1))}
-                    disabled={userPage === 1}
-                    className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-xs font-bold text-gray-500">
-                    Page {userPage} of {totalUserPages}
-                  </span>
-                  <button
-                    onClick={() => setUserPage(prev => Math.min(prev + 1, totalUserPages))}
-                    disabled={userPage === totalUserPages}
-                    className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+              <Pagination page={userPage} totalPages={totalUserPages} setPage={setUserPage} />
             </>
           )}
-        </section>
+        </div>
+      )}
+
+      {/* ============ TAB 4: ADVERTISE TICKETS ============ */}
+      {activeTab === "advertise" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-emerald-500" />
+              Homepage Advertisement Slots
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-gray-400">
+                Active Ads: <span className="text-emerald-500">{activeAdsCount}</span> / 6 max
+              </span>
+              <div className="w-24 h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  style={{ width: `${(activeAdsCount / 6) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Ad Info Banner */}
+          <div className="bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-indigo-500/10 border border-emerald-500/20 rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-xl">
+                <Globe className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Premium Homepage Placements</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Toggle the advertisement switch on any approved ticket to feature it on the homepage hero carousel. Maximum 6 slots available.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {loadingTickets ? (
+            <SkeletonRows count={4} />
+          ) : approvedTickets.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-12 text-center">
+              <Sparkles className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 font-medium">No approved tickets to advertise.</p>
+              <p className="text-[10px] text-gray-400 mt-1">Approve tickets from the Manage Tickets tab first.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {currentAdTickets.map((t) => (
+                  <div
+                    key={t._id}
+                    className={`relative bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
+                      t.isAdvertised
+                        ? "border-emerald-500/30 ring-1 ring-emerald-500/20"
+                        : "border-[var(--border)]"
+                    }`}
+                  >
+                    {/* Ad Active Indicator */}
+                    {t.isAdvertised && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[9px] font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
+                          <Eye className="w-2.5 h-2.5" /> LIVE
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Ticket Image */}
+                    {t.image ? (
+                      <img src={t.image} alt={t.title} className="w-full h-36 object-cover" />
+                    ) : (
+                      <div className="w-full h-36 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
+                        <Ticket className="w-8 h-8 text-gray-300 dark:text-slate-600" />
+                      </div>
+                    )}
+
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{t.title}</h3>
+                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                          {t.from} → {t.to} • <span className="capitalize">{t.transportType}</span>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800 dark:text-slate-100">${t.price}</span>
+                        <span className="text-gray-400">{t.ticketQuantity} seats</span>
+                      </div>
+
+                      {/* Ad Toggle Button */}
+                      <button
+                        onClick={() => handleAdToggle(t._id, t.isAdvertised)}
+                        disabled={actionLoading === t._id + "_ad"}
+                        className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${
+                          t.isAdvertised
+                            ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                            : "bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400"
+                        }`}
+                      >
+                        {t.isAdvertised ? (
+                          <><ToggleRight className="w-5 h-5" /> Advertised</>
+                        ) : (
+                          <><ToggleLeft className="w-5 h-5" /> Enable Ad</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Pagination page={adPage} totalPages={totalAdPages} setPage={setAdPage} />
+            </>
+          )}
+        </div>
       )}
 
       {/* Reusable Confirm Dialog */}
@@ -684,4 +898,19 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-32 bg-gray-100 dark:bg-slate-800/50 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+    }>
+      <AdminDashboardContent />
+    </Suspense>
+  );
+}
+
 export const dynamic = "force-dynamic";
