@@ -227,7 +227,7 @@ export default function HomePage() {
               </span>
               <span className="text-xs font-black uppercase tracking-widest">Live Platform Monitor</span>
             </div>
-            <h3 className="text-2xl font-black text-slate-850 dark:text-slate-100 leading-tight">
+            <h3 className="text-2xl font-black text-foreground leading-tight">
               Active Commutes Departing Daily
             </h3>
             <p className="text-xs text-gray-500 leading-relaxed">
@@ -235,14 +235,14 @@ export default function HomePage() {
             </p>
             <div className="flex items-center space-x-6 pt-2">
               <div>
-                <span className="text-2xl font-black text-slate-800 dark:text-slate-100 block">
+                <span className="text-2xl font-black text-foreground block">
                   {liveDepartureCount}
                 </span>
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Departures Today</span>
               </div>
-              <div className="border-l border-slate-200 dark:border-slate-850 h-8"></div>
+              <div className="border-l border-slate-200 dark:border-slate-855 h-8"></div>
               <div>
-                <span className="text-2xl font-black text-slate-800 dark:text-slate-100 block">
+                <span className="text-2xl font-black text-foreground block">
                   {liveBookingCount}
                 </span>
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Bookings Processed</span>
@@ -292,7 +292,7 @@ export default function HomePage() {
               <Sparkles className="w-4 h-4" />
               <span className="text-xs font-black uppercase tracking-widest">Sponsored Specials</span>
             </div>
-            <h2 className="text-3xl font-black text-slate-850 dark:text-slate-100">Featured Premium Commutes</h2>
+            <h2 className="text-3xl font-black text-foreground">Featured Premium Commutes</h2>
           </div>
         </div>
 
@@ -328,7 +328,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
-                  <h3 className="text-base font-black truncate text-slate-800 dark:text-slate-100 group-hover:text-[var(--primary)] transition-colors">
+                  <h3 className="text-base font-black truncate text-foreground group-hover:text-[var(--primary)] transition-colors">
                     {ticket.title}
                   </h3>
                   <div className="flex justify-between items-center text-xs text-gray-500 font-medium">
@@ -363,7 +363,7 @@ export default function HomePage() {
             <TrendingUp className="w-4 h-4" />
             <span className="text-xs font-black uppercase tracking-widest">Trending Hubs</span>
           </div>
-          <h2 className="text-3xl font-black text-slate-850 dark:text-slate-100">Popular Commute Routes</h2>
+          <h2 className="text-3xl font-black text-foreground">Popular Commute Routes</h2>
           <p className="text-xs text-gray-500 leading-relaxed">Most sought-after destinations booking right now at promotional rates.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -428,7 +428,7 @@ export default function HomePage() {
               <Clock className="w-4 h-4" />
               <span className="text-xs font-black uppercase tracking-widest">Fresh Arrivals</span>
             </div>
-            <h2 className="text-3xl font-black text-slate-850 dark:text-slate-100">Newly Listed Tickets</h2>
+            <h2 className="text-3xl font-black text-foreground">Newly Listed Tickets</h2>
           </div>
           <Link href="/tickets" className="text-xs font-black uppercase tracking-wider text-[var(--primary)] hover:underline flex items-center space-x-1">
             <span>All Tickets</span>
@@ -467,22 +467,22 @@ export default function HomePage() {
                       )}
                     </span>
                   </div>
-                  <h3 className="font-black text-sm truncate text-slate-855 dark:text-slate-100 group-hover:text-[var(--primary)] transition-colors">
+                  <h3 className="font-black text-sm truncate text-foreground group-hover:text-[var(--primary)] transition-colors">
                     {ticket.title}
                   </h3>
                   <div className="text-xs text-gray-500 space-y-1.5 font-medium">
                     <div className="flex justify-between">
                       <span>From:</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-350">{ticket.from}</span>
+                      <span className="font-bold text-foreground/80">{ticket.from}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>To:</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-350">{ticket.to}</span>
+                      <span className="font-bold text-foreground/80">{ticket.to}</span>
                     </div>
                   </div>
                 </div>
                 <div className="p-5 bg-[var(--input)]/50 border-t border-[var(--border)] flex justify-between items-center">
-                  <span className="text-base font-black text-slate-805 dark:text-slate-100">${ticket.price}</span>
+                  <span className="text-base font-black text-foreground">${ticket.price}</span>
                   <Link 
                     href={`/tickets/${ticket._id}`}
                     className="text-xs font-black uppercase tracking-wider text-[var(--primary)] hover:underline flex items-center space-x-1"
@@ -502,14 +502,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-3xl mx-auto space-y-2">
             <span className="text-xs font-black text-[var(--primary)] uppercase tracking-widest">Our Safeguards</span>
-            <h2 className="text-3xl font-black text-slate-850 dark:text-slate-100">Guaranteed Travel Experience</h2>
+            <h2 className="text-3xl font-black text-foreground">Guaranteed Travel Experience</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-4 p-6 liftup bg-[var(--card)] border border-[var(--border)] rounded-[24px] shadow-sm">
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <Ticket className="w-6 h-6 text-[var(--primary)]" />
               </div>
-              <h3 className="font-black text-base text-slate-800 dark:text-slate-100">Instant PDF Barcodes</h3>
+              <h3 className="font-black text-base text-foreground">Instant PDF Barcodes</h3>
               <p className="text-xs text-gray-500 leading-relaxed font-medium">
                 Valid secure tickets generated instantly after checkout. Print or keep digital barcodes on any screen.
               </p>
@@ -519,7 +519,7 @@ export default function HomePage() {
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
               </div>
-              <h3 className="font-black text-base text-slate-800 dark:text-slate-100">Stripe Escrow Security</h3>
+              <h3 className="font-black text-base text-foreground">Stripe Escrow Security</h3>
               <p className="text-xs text-gray-500 leading-relaxed font-medium">
                 Transactions handled via standard SSL encryption. Vendors receive payouts only after successful commute.
               </p>
@@ -529,7 +529,7 @@ export default function HomePage() {
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <Award className="w-6 h-6 text-[var(--primary)]" />
               </div>
-              <h3 className="font-black text-base text-slate-800 dark:text-slate-100">Zero Hidden Markup</h3>
+              <h3 className="font-black text-base text-foreground">Zero Hidden Markup</h3>
               <p className="text-xs text-gray-500 leading-relaxed font-medium">
                 What you see is what you pay. Transparent flat scheduling rates directly set by transport operators.
               </p>
@@ -539,7 +539,7 @@ export default function HomePage() {
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <ShieldAlert className="w-6 h-6 text-[var(--primary)]" />
               </div>
-              <h3 className="font-black text-base text-slate-800 dark:text-slate-100">Instant Online Refunds</h3>
+              <h3 className="font-black text-base text-foreground">Instant Online Refunds</h3>
               <p className="text-xs text-gray-500 leading-relaxed font-medium">
                 Cancel schedules directly from passenger portal. Payout refunds processed back to banking cards.
               </p>
@@ -552,59 +552,59 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="text-center max-w-3xl mx-auto space-y-2">
           <span className="text-xs font-black text-[var(--primary)] uppercase tracking-widest">Passenger Voice</span>
-          <h2 className="text-3xl font-black text-slate-850 dark:text-slate-100">Highly Rated by Thousands</h2>
+          <h2 className="text-3xl font-black text-foreground">Highly Rated by Thousands</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-950 text-white rounded-[28px] p-6 space-y-4 shadow-xl shadow-slate-950/5 relative overflow-hidden flex flex-col justify-between h-64">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[28px] p-6 space-y-4 shadow-xl shadow-slate-950/5 relative overflow-hidden flex flex-col justify-between h-64 liftup">
             <div className="space-y-4">
               <div className="flex items-center space-x-1 text-yellow-400">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+              <p className="text-xs text-foreground/80 leading-relaxed font-medium">
                 "Instant barcodes delivered right after checkout. I bypassed the standard agent lines at the bus counter completely."
               </p>
             </div>
-            <div className="flex items-center space-x-3 pt-4 border-t border-white/5">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=80" className="w-8 h-8 rounded-full border border-white/10 object-cover" />
+            <div className="flex items-center space-x-3 pt-4 border-t border-[var(--border)]/50">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=80" className="w-8 h-8 rounded-full border border-[var(--border)]/50 object-cover" />
               <div>
-                <h4 className="text-xs font-black text-white">Tanvir Rahman</h4>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase">Verified Passenger</span>
+                <h4 className="text-xs font-black text-foreground">Tanvir Rahman</h4>
+                <span className="text-[9px] text-foreground/60 font-bold block uppercase">Verified Passenger</span>
               </div>
             </div>
           </div>
           
-          <div className="bg-slate-950 text-white rounded-[28px] p-6 space-y-4 shadow-xl shadow-slate-950/5 relative overflow-hidden flex flex-col justify-between h-64">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[28px] p-6 space-y-4 shadow-xl shadow-slate-950/5 relative overflow-hidden flex flex-col justify-between h-64 liftup">
             <div className="space-y-4">
               <div className="flex items-center space-x-1 text-yellow-400">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+              <p className="text-xs text-foreground/80 leading-relaxed font-medium">
                 "Stripe payment was extremely straightforward. No issues with multiple banking credentials. Very clean interface."
               </p>
             </div>
-            <div className="flex items-center space-x-3 pt-4 border-t border-white/5">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=80" className="w-8 h-8 rounded-full border border-white/10 object-cover" />
+            <div className="flex items-center space-x-3 pt-4 border-t border-[var(--border)]/50">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=80" className="w-8 h-8 rounded-full border border-[var(--border)]/50 object-cover" />
               <div>
-                <h4 className="text-xs font-black text-white">Zarin Tasnim</h4>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase">Frequent Traveler</span>
+                <h4 className="text-xs font-black text-foreground">Zarin Tasnim</h4>
+                <span className="text-[9px] text-foreground/60 font-bold block uppercase">Frequent Traveler</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-950 text-white rounded-[28px] p-6 space-y-4 shadow-xl shadow-slate-950/5 relative overflow-hidden flex flex-col justify-between h-64">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-[28px] p-6 space-y-4 shadow-xl shadow-slate-950/5 relative overflow-hidden flex flex-col justify-between h-64 liftup">
             <div className="space-y-4">
               <div className="flex items-center space-x-1 text-yellow-400">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+              <p className="text-xs text-foreground/80 leading-relaxed font-medium">
                 "Refund system worked flawlessly when my plan changed. Cancelled with one tap on the panel and got credited fast."
               </p>
             </div>
-            <div className="flex items-center space-x-3 pt-4 border-t border-white/5">
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=80" className="w-8 h-8 rounded-full border border-white/10 object-cover" />
+            <div className="flex items-center space-x-3 pt-4 border-t border-[var(--border)]/50">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=80" className="w-8 h-8 rounded-full border border-[var(--border)]/50 object-cover" />
               <div>
-                <h4 className="text-xs font-black text-white">Imran Chowdhury</h4>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase">Business Commuter</span>
+                <h4 className="text-xs font-black text-foreground">Imran Chowdhury</h4>
+                <span className="text-[9px] text-foreground/60 font-bold block uppercase">Business Commuter</span>
               </div>
             </div>
           </div>
@@ -618,7 +618,7 @@ export default function HomePage() {
             <BookOpen className="w-4 h-4" />
             <span className="text-xs font-black uppercase tracking-widest">Travel Insights</span>
           </div>
-          <h2 className="text-3xl font-black text-slate-855 dark:text-slate-100">Travel Diaries & Guides</h2>
+          <h2 className="text-3xl font-black text-foreground">Travel Diaries & Guides</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)] shadow-sm flex flex-col liftup group">
@@ -628,7 +628,7 @@ export default function HomePage() {
             <div className="p-6 flex-grow flex flex-col justify-between space-y-4">
               <div className="space-y-2">
                 <span className="text-[9px] font-black text-[var(--primary)] tracking-widest uppercase bg-[var(--primary)]/10 px-2 py-0.5 rounded-md">Tips</span>
-                <h3 className="font-black text-base leading-snug text-slate-850 dark:text-slate-100">Long-Haul Train Travel Accessories</h3>
+                <h3 className="font-black text-base leading-snug text-foreground">Long-Haul Train Travel Accessories</h3>
                 <p className="text-xs text-gray-500 font-medium line-clamp-3">Discover essential tech and comfort items that maximize passenger comfort on cross-country rail schedules.</p>
               </div>
               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">June 15, 2026 • 4 min read</span>
@@ -642,7 +642,7 @@ export default function HomePage() {
             <div className="p-6 flex-grow flex flex-col justify-between space-y-4">
               <div className="space-y-2">
                 <span className="text-[9px] font-black text-[var(--primary)] tracking-widest uppercase bg-[var(--primary)]/10 px-2 py-0.5 rounded-md">Safety</span>
-                <h3 className="font-black text-base leading-snug text-slate-850 dark:text-slate-100">Highway Safety Protocols in Commuting</h3>
+                <h3 className="font-black text-base leading-snug text-foreground">Highway Safety Protocols in Commuting</h3>
                 <p className="text-xs text-gray-500 font-medium line-clamp-3">Standards implemented by top-tier coach vendors in Bangladesh to guarantee sanitized travel spaces.</p>
               </div>
               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">June 12, 2026 • 5 min read</span>
@@ -656,7 +656,7 @@ export default function HomePage() {
             <div className="p-6 flex-grow flex flex-col justify-between space-y-4">
               <div className="space-y-2">
                 <span className="text-[9px] font-black text-[var(--primary)] tracking-widest uppercase bg-[var(--primary)]/10 px-2 py-0.5 rounded-md">Guides</span>
-                <h3 className="font-black text-base leading-snug text-slate-850 dark:text-slate-100">Summer Getaways: Cox's Bazar Guide</h3>
+                <h3 className="font-black text-base leading-snug text-foreground">Summer Getaways: Cox's Bazar Guide</h3>
                 <p className="text-xs text-gray-500 font-medium line-clamp-3">Everything you need to know about food, sightseeing, and optimal hotel reservations during off-season monsoon trips.</p>
               </div>
               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">June 08, 2026 • 6 min read</span>
