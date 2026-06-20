@@ -137,7 +137,7 @@ export default function HomePage() {
             <div className="glass p-6 sm:p-8 rounded-[32px] shadow-2xl border border-white/10 space-y-6">
               
               {/* Creative Mode Tabs for Transport */}
-              <div className="flex space-x-2 border-b border-white/5 pb-4">
+              <div className="flex space-x-2 border-b border-white/10 pb-4">
                 {[
                   { value: "", label: "All Vehicles", icon: Ticket },
                   { value: "bus", label: "Bus Coach", icon: Bus },
@@ -150,7 +150,7 @@ export default function HomePage() {
                     className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-all duration-300 ${
                       searchForm.transportType === tab.value
                         ? "bg-[var(--primary)] text-white shadow-lg shadow-emerald-500/20"
-                        : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                        : "bg-[var(--input)]/40 text-foreground/70 hover:text-foreground hover:bg-[var(--input)]"
                     }`}
                   >
                     <tab.icon className="w-3.5 h-3.5" />
@@ -161,7 +161,7 @@ export default function HomePage() {
 
               <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div className="space-y-2 text-left">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 flex items-center space-x-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-foreground/80 flex items-center space-x-1">
                     <MapPin className="w-3 h-3 text-[var(--primary)]" />
                     <span>Leaving From</span>
                   </label>
@@ -170,12 +170,12 @@ export default function HomePage() {
                     placeholder="e.g. Dhaka"
                     value={searchForm.from}
                     onChange={(e) => setSearchForm({ ...searchForm, from: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[var(--primary)] h-11"
+                    className="bg-[var(--input)] border-[var(--border)] text-foreground placeholder:text-foreground/40 focus-visible:ring-[var(--primary)] h-11"
                   />
                 </div>
 
                 <div className="space-y-2 text-left">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 flex items-center space-x-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-foreground/80 flex items-center space-x-1">
                     <MapPin className="w-3 h-3 text-[var(--primary)]" />
                     <span>Going To</span>
                   </label>
@@ -184,12 +184,12 @@ export default function HomePage() {
                     placeholder="e.g. Cox's Bazar"
                     value={searchForm.to}
                     onChange={(e) => setSearchForm({ ...searchForm, to: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[var(--primary)] h-11"
+                    className="bg-[var(--input)] border-[var(--border)] text-foreground placeholder:text-foreground/40 focus-visible:ring-[var(--primary)] h-11"
                   />
                 </div>
 
                 <div className="space-y-2 text-left">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 flex items-center space-x-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-foreground/80 flex items-center space-x-1">
                     <Calendar className="w-3 h-3 text-[var(--primary)]" />
                     <span>Travel Date</span>
                   </label>
@@ -197,7 +197,7 @@ export default function HomePage() {
                     type="date"
                     value={searchForm.date}
                     onChange={(e) => setSearchForm({ ...searchForm, date: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white focus-visible:ring-[var(--primary)] h-11"
+                    className="bg-[var(--input)] border-[var(--border)] text-foreground focus-visible:ring-[var(--primary)] h-11"
                   />
                 </div>
 
