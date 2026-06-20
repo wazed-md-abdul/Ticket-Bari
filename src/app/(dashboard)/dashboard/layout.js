@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { 
   User, Shield, BarChart3, Ticket, LogOut, 
-  Menu, X, Home, Sun, Moon 
+  Menu, X, Home, Sun, Moon, PlusCircle, Calendar, CreditCard, Users, Sparkles
 } from "lucide-react";
 
-export default function DashboardLayout({ children }) {
+function SidebarContent({ children }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, isPending } = useSession();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,14 +56,91 @@ export default function DashboardLayout({ children }) {
   }
 
   const role = session.user.role || "user";
+  const activeTab = searchParams.get("tab") || "profile";
 
-  const menuItems = [
-    {
-      name: "Profile",
-      href: `/dashboard/${role}`,
-      icon: <User className="w-4 h-4" />
-    }
-  ];
+  let menuItems = [];
+  if (role === "admin") {
+    menuItems = [
+      {
+        name: "Admin Profile",
+        href: "/dashboard/admin?tab=profile",
+        tab: "profile",
+        icon: <User className="w-4 h-4" />
+      },
+      {
+        name: "Manage Tickets",
+        href: "/dashboard/admin?tab=tickets",
+        tab: "tickets",
+        icon: <Ticket className="w-4 h-4" />
+      },
+      {
+        name: "Manage Users",
+        href: "/dashboard/admin?tab=users",
+        tab: "users",
+        icon: <Users className="w-4 h-4" />
+      },
+      {
+        name: "Advertise Tickets",
+        href: "/dashboard/admin?tab=advertise",
+        tab: "advertise",
+        icon: <Sparkles className="w-4 h-4" />
+      }
+    ];
+  } else if (role === "vendor") {
+    menuItems = [
+      {
+        name: "Vendor Profile",
+        href: "/dashboard/vendor?tab=profile",
+        tab: "profile",
+        icon: <User className="w-4 h-4" />
+      },
+      {
+        name: "Add Ticket",
+        href: "/dashboard/vendor?tab=add-ticket",
+        tab: "add-ticket",
+        icon: <PlusCircle className="w-4 h-4" />
+      },
+      {
+        name: "My Added Tickets",
+        href: "/dashboard/vendor?tab=tickets",
+        tab: "tickets",
+        icon: <Ticket className="w-4 h-4" />
+      },
+      {
+        name: "Requested Bookings",
+        href: "/dashboard/vendor?tab=bookings",
+        tab: "bookings",
+        icon: <Calendar className="w-4 h-4" />
+      },
+      {
+        name: "Revenue Overview",
+        href: "/dashboard/vendor?tab=revenue",
+        tab: "revenue",
+        icon: <BarChart3 className="w-4 h-4" />
+      }
+    ];
+  } else {
+    menuItems = [
+      {
+        name: "User Profile",
+        href: "/dashboard/user?tab=profile",
+        tab: "profile",
+        icon: <User className="w-4 h-4" />
+      },
+      {
+        name: "My Booked Tickets",
+        href: "/dashboard/user?tab=bookings",
+        tab: "bookings",
+        icon: <Ticket className="w-4 h-4" />
+      },
+      {
+        name: "Transaction History",
+        href: "/dashboard/user?tab=transactions",
+        tab: "transactions",
+        icon: <CreditCard className="w-4 h-4" />
+      }
+    ];
+  }
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-slate-950">
@@ -108,13 +186,13 @@ export default function DashboardLayout({ children }) {
                   key={item.name}
                   href={item.href}
                   className={`flex items-center space-x-3 px-3 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all-300 ${
-                    pathname === item.href
+                    activeTab === item.tab
                       ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400"
                       : "text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200"
                   }`}
                 >
                   {item.icon}
-                  <span>{item.name} Workspace</span>
+                  <span>{item.name}</span>
                 </Link>
               ))}
             </nav>
@@ -161,4 +239,17 @@ export default function DashboardLayout({ children }) {
     </div>
   );
 }
+
+export default function DashboardLayout({ children }) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950">
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <SidebarContent>{children}</SidebarContent>
+    </Suspense>
+  );
+}
+
 export const dynamic = "force-dynamic";
