@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "@/lib/auth-client";
+import { useSession, authClient } from "@/lib/auth-client";
 import { 
   User, Mail, Shield, ShieldAlert, CheckCircle, XCircle, 
   ToggleLeft, ToggleRight, Trash2, Award, AlertTriangle, ShieldCheck 
@@ -20,7 +20,13 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     if (!session?.user) return;
-    const token = session.session?.token || "";
+    let token = "";
+    try {
+      const tokenRes = await authClient.token();
+      token = tokenRes?.data?.token || "";
+    } catch (e) {
+      console.error("Error retrieving JWT token:", e);
+    }
 
     // 1. Fetch all users
     try {
@@ -67,7 +73,13 @@ export default function AdminDashboard() {
     setActionLoading(ticketId);
 
     try {
-      const token = session.session?.token || "";
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
       const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
         method: "PUT",
         headers: {
@@ -97,7 +109,13 @@ export default function AdminDashboard() {
     setActionLoading(ticketId + "_ad");
 
     try {
-      const token = session.session?.token || "";
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
       const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
         method: "PUT",
         headers: {
@@ -122,12 +140,21 @@ export default function AdminDashboard() {
   };
 
   const handleRoleChange = async (userId, newRole) => {
+    if (!window.confirm(`Are you sure you want to change system role to ${newRole}?`)) {
+      return;
+    }
     setError("");
     setSuccess("");
     setActionLoading(userId + "_role");
 
     try {
-      const token = session.session?.token || "";
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
       const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: "PUT",
         headers: {
@@ -142,22 +169,35 @@ export default function AdminDashboard() {
         throw new Error(data.error || "Failed to change user role.");
       }
 
-      setSuccess("User role updated successfully.");
+      const msg = "User role updated successfully.";
+      setSuccess(msg);
+      window.alert(msg);
       fetchData();
     } catch (err) {
       setError(err.message || "Failed to change user role.");
+      window.alert(err.message || "Failed to change user role.");
     } finally {
       setActionLoading("");
     }
   };
 
   const handleFraudToggle = async (userId, currentFraudState) => {
+    const actStr = currentFraudState ? "clear fraud flag from" : "mark as fraud";
+    if (!window.confirm(`Are you sure you want to ${actStr} this user?`)) {
+      return;
+    }
     setError("");
     setSuccess("");
     setActionLoading(userId + "_fraud");
 
     try {
-      const token = session.session?.token || "";
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
       const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: "PUT",
         headers: {
@@ -172,10 +212,13 @@ export default function AdminDashboard() {
         throw new Error(data.error || "Failed to update fraud flag.");
       }
 
-      setSuccess(`Fraud flag successfully ${!currentFraudState ? "activated" : "cleared"}.`);
+      const msg = `Fraud flag successfully ${!currentFraudState ? "activated" : "cleared"}.`;
+      setSuccess(msg);
+      window.alert(msg);
       fetchData();
     } catch (err) {
       setError(err.message || "Failed to update fraud flag.");
+      window.alert(err.message || "Failed to update fraud flag.");
     } finally {
       setActionLoading("");
     }

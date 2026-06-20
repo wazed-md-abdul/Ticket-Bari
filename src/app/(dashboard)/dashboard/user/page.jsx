@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "@/lib/auth-client";
+import { useSession, authClient } from "@/lib/auth-client";
 import { 
   User, Mail, CreditCard, Ticket, Calendar, ShieldCheck, 
   Clock, ShieldAlert, ArrowRight, Loader2 
@@ -20,9 +20,16 @@ export default function UserDashboard() {
     if (!session?.user) return;
 
     const fetchUserDashboardData = async () => {
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
+
       // 1. Fetch Bookings
       try {
-        const token = session.session?.token || "";
         const bookingsRes = await fetch("http://localhost:5000/api/bookings", {
           headers: {
             "Authorization": `Bearer ${token}`
@@ -40,7 +47,6 @@ export default function UserDashboard() {
 
       // 2. Fetch Transactions
       try {
-        const token = session.session?.token || "";
         const txRes = await fetch("http://localhost:5000/api/transactions", {
           headers: {
             "Authorization": `Bearer ${token}`

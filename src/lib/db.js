@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === "development") {
 
 export async function getDb() {
   const clientConn = await clientPromise;
-  return clientConn.db("hire_hub_db");
+  return clientConn.db("ticketbari");
 }
 
 export default clientPromise;

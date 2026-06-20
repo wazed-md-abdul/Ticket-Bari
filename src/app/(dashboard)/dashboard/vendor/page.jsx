@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function VendorDashboard() {
-  const { data: session } = useSession();
+
   const [tickets, setTickets] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [stats, setStats] = useState({ revenue: 0, totalBookings: 0, chartData: [] });
@@ -42,10 +42,18 @@ export default function VendorDashboard() {
   useEffect(() => {
     setMounted(true);
   }, []);
+const { data: session } = authClient.useSession();
+console.log(session);
 
   const fetchData = async () => {
     if (!session?.user) return;
-    const token = session.session?.token || "";
+    let token = "";
+    try {
+      const tokenRes = await authClient.token();
+      token = tokenRes?.data?.token || "";
+    } catch (e) {
+      console.error("Error retrieving JWT token:", e);
+    }
 
     // Check if user is fraud
     try {
@@ -140,7 +148,9 @@ export default function VendorDashboard() {
         });
 
         if (!imgbbRes.ok) {
-          throw new Error("ImgBB image upload failed.");
+          const errData = await imgbbRes.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `ImgBB image upload failed (status ${imgbbRes.status}).`;
+          throw new Error(errMsg);
         }
 
         const imgData = await imgbbRes.json();
@@ -148,7 +158,13 @@ export default function VendorDashboard() {
       }
 
       // 2. Submit ticket to backend Express Server
-      const token = session.session?.token || "";
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
       const res = await fetch("http://localhost:5000/api/tickets", {
         method: "POST",
         headers: {
@@ -195,7 +211,13 @@ export default function VendorDashboard() {
     setActionLoading(bookingId);
 
     try {
-      const token = session.session?.token || "";
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
       const res = await fetch(`http://localhost:5000/api/bookings/${bookingId}/status`, {
         method: "PUT",
         headers: {

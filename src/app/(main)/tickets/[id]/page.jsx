@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth-client";
+import { useSession, authClient } from "@/lib/auth-client";
 import { 
   Plane, Bus, Train, Calendar, Clock, MapPin, 
   DollarSign, ShieldAlert, Sparkles, AlertCircle, ShoppingBag 
@@ -82,13 +82,21 @@ export default function TicketDetailsPage() {
     setBookingLoading(true);
 
     try {
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
+
       const res = await fetch("http://localhost:5000/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           // Pass authorization credentials
-          ...((session && typeof window !== "undefined") ? {
-            "Authorization": `Bearer ${session.session?.token || ""}`
+          ...((token && typeof window !== "undefined") ? {
+            "Authorization": `Bearer ${token}`
           } : {})
         },
         body: JSON.stringify({

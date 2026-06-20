@@ -38,7 +38,9 @@ export default function SignUpPage() {
         });
 
         if (!uploadRes.ok) {
-          throw new Error("Failed to upload avatar image to ImgBB.");
+          const errData = await uploadRes.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `Failed to upload avatar image to ImgBB (status ${uploadRes.status}).`;
+          throw new Error(errMsg);
         }
 
         const uploadData = await uploadRes.json();
@@ -55,7 +57,7 @@ export default function SignUpPage() {
         name,
         image: imageUrl,
         role: role, // Extends schema
-        callbackURL: "/",
+       
       });
 
       if (res?.error) {

@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { jwt } from "better-auth/plugins";
 import clientPromise from "./db";
 
 const client = await clientPromise;
@@ -13,6 +14,21 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  plugins: [
+    jwt({
+      jwt: {
+        definePayload: ({ user }) => {
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isFraud: user.isFraud,
+          };
+        },
+      },
+    }),
+  ],
   user: {
     additionalFields: {
       role: {
