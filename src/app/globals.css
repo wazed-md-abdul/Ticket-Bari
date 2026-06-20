@@ -26,49 +26,49 @@
 }
 
 :root {
-  /* Light Mode Colors from palette */
-  --background: #F5FAF4;
-  --foreground: #0D220C;
+  /* Modern Sleek Alabaster & Emerald Palette */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   
-  --primary: #386629;
-  --primary-dark: #264a1b;
-  --primary-light-bg: #e2edd5;
-  --primary-light-border: #cfdfbf;
+  --primary: #059669;
+  --primary-dark: #047857;
+  --primary-light-bg: #ECFDF5;
+  --primary-light-border: #D1FAE5;
   
-  --secondary: #80B5D2;
-  --secondary-dark: #5892b1;
+  --secondary: #0EA5E9;
+  --secondary-dark: #0284C7;
   
-  --accent: #3D54AC;
+  --accent: #6366F1;
   
   --card: #FFFFFF;
-  --card-foreground: #0D220C;
+  --card-foreground: #0F172A;
   
-  --border: #DDE8DC;
-  --input: #E2ECE1;
-  --ring: #386629;
+  --border: #E2E8F0;
+  --input: #F1F5F9;
+  --ring: #059669;
 }
 
 .dark {
-  /* Dark Mode Colors from palette */
-  --background: #0C180B;
-  --foreground: #E7F3E2;
+  /* Premium Slate/Coal Obsidian Palette */
+  --background: #030712;
+  --foreground: #F9FAFB;
   
-  --primary: #A3D69B;
-  --primary-dark: #81ba77;
-  --primary-light-bg: #162a15;
-  --primary-light-border: #213d20;
+  --primary: #34D399;
+  --primary-dark: #059669;
+  --primary-light-bg: #064E3B;
+  --primary-light-border: #065F46;
   
-  --secondary: #356A86;
-  --secondary-dark: #234b62;
+  --secondary: #38BDF8;
+  --secondary-dark: #0EA5E9;
   
-  --accent: #667ECE;
+  --accent: #818CF8;
   
-  --card: #142413;
-  --card-foreground: #E7F3E2;
+  --card: #0B0F19;
+  --card-foreground: #F9FAFB;
   
-  --border: #1D351B;
-  --input: #233F20;
-  --ring: #A3D69B;
+  --border: #1F2937;
+  --input: #111827;
+  --ring: #34D399;
 }
 
 @layer base {
@@ -96,7 +96,7 @@
 }
 
 .dark .glass {
-  background: rgba(20, 36, 19, 0.65);
+  background: rgba(11, 15, 25, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -120,12 +120,12 @@
 
 .liftup:hover {
   transform: translateY(-5px) scale(1.005);
-  box-shadow: 0 20px 35px -15px rgba(56, 102, 41, 0.12);
+  box-shadow: 0 20px 35px -15px rgba(15, 23, 42, 0.08);
   border-color: var(--primary) !important;
 }
 
 .dark .liftup:hover {
-  box-shadow: 0 20px 35px -15px rgba(163, 214, 155, 0.08);
+  box-shadow: 0 20px 35px -15px rgba(52, 211, 153, 0.06);
 }
 
 /* Scrollbar Customization */

@@ -252,28 +252,28 @@ export default function HomePage() {
 
           {/* Core Trust Counters Grid */}
           <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-            <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-850 shadow-sm liftup">
+            <div className="bg-[var(--card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm liftup">
               <span className="text-3xl font-black text-[var(--primary)] block">
                 <CountUp end={10} suffix="M+" />
               </span>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 block">Tickets Booked</span>
             </div>
 
-            <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-850 shadow-sm liftup">
+            <div className="bg-[var(--card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm liftup">
               <span className="text-3xl font-black text-[var(--primary)] block">
                 <CountUp end={500} suffix="+" />
               </span>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 block">Operators</span>
             </div>
 
-            <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-850 shadow-sm liftup">
+            <div className="bg-[var(--card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm liftup">
               <span className="text-3xl font-black text-[var(--primary)] block">
                 <CountUp end={99} suffix=".9%" />
               </span>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 block">Departure Rate</span>
             </div>
 
-            <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/40 dark:border-slate-850 shadow-sm liftup">
+            <div className="bg-[var(--card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm liftup">
               <span className="text-3xl font-black text-[var(--primary)] block">
                 <CountUp end={24} suffix="/7" />
               </span>
@@ -311,7 +311,7 @@ export default function HomePage() {
             {ads.map((ticket) => (
               <div 
                 key={ticket._id}
-                className="bg-white dark:bg-slate-950 rounded-3xl overflow-hidden border border-slate-250/50 dark:border-slate-850 shadow-sm hover:shadow-xl hover:border-emerald-500/20 transition-all duration-300 liftup group"
+                className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)] shadow-sm hover:shadow-xl hover:border-emerald-500/20 transition-all duration-300 liftup group"
               >
                 <div className="relative h-48 w-full overflow-hidden">
                   <img
@@ -451,7 +451,7 @@ export default function HomePage() {
             {latestTickets.map((ticket) => (
               <div 
                 key={ticket._id}
-                className="bg-white dark:bg-slate-950 rounded-3xl overflow-hidden border border-slate-250/50 dark:border-slate-850 flex flex-col justify-between hover:shadow-xl hover:border-emerald-500/20 transition-all duration-300 liftup group"
+                className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)] flex flex-col justify-between hover:shadow-xl hover:border-emerald-500/20 transition-all duration-300 liftup group"
               >
                 <div className="p-5 space-y-4">
                   <div className="flex justify-between items-center">
@@ -481,7 +481,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                <div className="p-5 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-200/50 dark:border-slate-850 flex justify-between items-center">
+                <div className="p-5 bg-[var(--input)]/50 border-t border-[var(--border)] flex justify-between items-center">
                   <span className="text-base font-black text-slate-805 dark:text-slate-100">${ticket.price}</span>
                   <Link 
                     href={`/tickets/${ticket._id}`}
@@ -505,7 +505,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-black text-slate-850 dark:text-slate-100">Guaranteed Travel Experience</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-4 p-6 liftup bg-white dark:bg-slate-950 border border-slate-200/50 dark:border-slate-850 rounded-[24px] shadow-sm">
+            <div className="space-y-4 p-6 liftup bg-[var(--card)] border border-[var(--border)] rounded-[24px] shadow-sm">
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <Ticket className="w-6 h-6 text-[var(--primary)]" />
               </div>
@@ -515,7 +515,7 @@ export default function HomePage() {
               </p>
             </div>
             
-            <div className="space-y-4 p-6 liftup bg-white dark:bg-slate-950 border border-slate-200/50 dark:border-slate-850 rounded-[24px] shadow-sm">
+            <div className="space-y-4 p-6 liftup bg-[var(--card)] border border-[var(--border)] rounded-[24px] shadow-sm">
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
               </div>
@@ -525,7 +525,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="space-y-4 p-6 liftup bg-white dark:bg-slate-950 border border-slate-200/50 dark:border-slate-850 rounded-[24px] shadow-sm">
+            <div className="space-y-4 p-6 liftup bg-[var(--card)] border border-[var(--border)] rounded-[24px] shadow-sm">
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <Award className="w-6 h-6 text-[var(--primary)]" />
               </div>
@@ -535,7 +535,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="space-y-4 p-6 liftup bg-white dark:bg-slate-950 border border-slate-200/50 dark:border-slate-850 rounded-[24px] shadow-sm">
+            <div className="space-y-4 p-6 liftup bg-[var(--card)] border border-[var(--border)] rounded-[24px] shadow-sm">
               <div className="p-3 bg-[var(--primary)]/10 rounded-2xl w-fit">
                 <ShieldAlert className="w-6 h-6 text-[var(--primary)]" />
               </div>
@@ -621,7 +621,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-black text-slate-855 dark:text-slate-100">Travel Diaries & Guides</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white dark:bg-slate-950 rounded-3xl overflow-hidden border border-slate-200/50 dark:border-slate-850 shadow-sm flex flex-col liftup group">
+          <div className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)] shadow-sm flex flex-col liftup group">
             <div className="h-48 overflow-hidden">
               <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=600" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
@@ -635,7 +635,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-950 rounded-3xl overflow-hidden border border-slate-200/50 dark:border-slate-850 shadow-sm flex flex-col liftup group">
+          <div className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)] shadow-sm flex flex-col liftup group">
             <div className="h-48 overflow-hidden">
               <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=600" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
@@ -649,7 +649,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-950 rounded-3xl overflow-hidden border border-slate-200/50 dark:border-slate-850 shadow-sm flex flex-col liftup group">
+          <div className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)] shadow-sm flex flex-col liftup group">
             <div className="h-48 overflow-hidden">
               <img src="https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?auto=format&fit=crop&q=80&w=600" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
