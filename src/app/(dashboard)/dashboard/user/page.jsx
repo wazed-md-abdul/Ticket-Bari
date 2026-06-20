@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, Suspense } from "react";
 import { useSession, authClient } from "@/lib/auth-client";
 import { useSearchParams } from "next/navigation";

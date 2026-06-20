@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
+import { useSearchParams, useRouter } from "next/navigation";
 import CountUp from "@/components/CountUp";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
@@ -9,15 +10,17 @@ import {
 } from "recharts";
 import { 
   User, Mail, Ticket, PlusCircle, CheckCircle, XCircle, 
-  AlertTriangle, DollarSign, Calendar, RefreshCw, Loader2, BarChart3
+  AlertTriangle, DollarSign, Calendar, RefreshCw, Loader2, BarChart3, Edit, Trash2
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { toast } from "sonner";
 
+function VendorDashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-export default function VendorDashboard() {
   const [tickets, setTickets] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [stats, setStats] = useState({ revenue: 0, totalBookings: 0, chartData: [] });
@@ -31,15 +34,16 @@ export default function VendorDashboard() {
   const [actionLoading, setActionLoading] = useState("");
   const [mounted, setMounted] = useState(false);
 
-  // Tab State: "analytics" | "tickets" | "bookings"
-  const [activeTab, setActiveTab] = useState("analytics");
+  // Tab State via Search Params
+  const activeTab = searchParams.get("tab") || "profile";
 
   // Pagination states
   const [ticketPage, setTicketPage] = useState(1);
   const [bookingPage, setBookingPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6;
 
   // Form states
+  const [editingTicketId, setEditingTicketId] = useState(null);
   const [title, setTitle] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -48,9 +52,16 @@ export default function VendorDashboard() {
   const [price, setPrice] = useState("");
   const [ticketQuantity, setTicketQuantity] = useState("");
   const [imageFile, setImageFile] = useState(null);
+  const [perks, setPerks] = useState([]);
   
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const handlePerkChange = (perk) => {
+    setPerks(prev =>
+      prev.includes(perk) ? prev.filter(p => p !== perk) : [...prev, perk]
+    );
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -178,32 +189,50 @@ export default function VendorDashboard() {
       } catch (e) {
         console.error("Error retrieving JWT token:", e);
       }
-      const res = await fetch("http://localhost:5000/api/tickets", {
-        method: "POST",
+
+      const isEdit = !!editingTicketId;
+      const url = isEdit 
+        ? `http://localhost:5000/api/tickets/${editingTicketId}`
+        : "http://localhost:5000/api/tickets";
+      const method = isEdit ? "PUT" : "POST";
+
+      const payload = {
+        title,
+        from,
+        to,
+        transportType,
+        departureDateTime,
+        price: Number(price),
+        ticketQuantity: Number(ticketQuantity),
+        perks,
+      };
+
+      if (imageUrl) {
+        payload.image = imageUrl;
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({
-          title,
-          from,
-          to,
-          transportType,
-          departureDateTime,
-          price: Number(price),
-          ticketQuantity: Number(ticketQuantity),
-          image: imageUrl,
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to add ticket.");
+        throw new Error(data.error || "Failed to submit ticket.");
       }
 
-      const successMsg = "Ticket added successfully! Awaiting Admin approval.";
+      const successMsg = isEdit 
+        ? "Ticket updated successfully! Awaiting Admin approval."
+        : "Ticket added successfully! Awaiting Admin approval.";
+
       setSuccess(successMsg);
       toast.success(successMsg);
+      
+      // Reset form
       setTitle("");
       setFrom("");
       setTo("");
@@ -211,15 +240,78 @@ export default function VendorDashboard() {
       setPrice("");
       setTicketQuantity("");
       setImageFile(null);
+      setPerks([]);
+      setEditingTicketId(null);
       
-      // Refresh ticket grid
+      // Refresh tickets
       fetchData();
+      router.push("/dashboard/vendor?tab=tickets");
     } catch (err) {
       const errMsg = err.message || "Something went wrong.";
       setError(errMsg);
       toast.error(errMsg);
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleSelectUpdate = (ticket) => {
+    setEditingTicketId(ticket._id);
+    setTitle(ticket.title);
+    setFrom(ticket.from);
+    setTo(ticket.to);
+    setTransportType(ticket.transportType);
+    
+    // Format date string for datetime-local input
+    if (ticket.departureDateTime) {
+      const dateObj = new Date(ticket.departureDateTime);
+      const localISO = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      setDepartureDateTime(localISO);
+    } else {
+      setDepartureDateTime("");
+    }
+
+    setPrice(ticket.price.toString());
+    setTicketQuantity(ticket.ticketQuantity.toString());
+    setPerks(ticket.perks || []);
+    
+    router.push("/dashboard/vendor?tab=add-ticket");
+  };
+
+  const handleDeleteTicket = async (ticketId) => {
+    if (!confirm("Are you sure you want to delete this ticket?")) return;
+    setError("");
+    setSuccess("");
+    setActionLoading(ticketId);
+
+    try {
+      let token = "";
+      try {
+        const tokenRes = await authClient.token();
+        token = tokenRes?.data?.token || "";
+      } catch (e) {
+        console.error("Error retrieving JWT token:", e);
+      }
+
+      const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete ticket.");
+      }
+
+      toast.success("Ticket deleted successfully.");
+      fetchData();
+    } catch (err) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setActionLoading("");
     }
   };
 
@@ -262,7 +354,7 @@ export default function VendorDashboard() {
       case "rejected":
         return <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600 rounded-md">Rejected</span>;
       default:
-        return <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-yellow-50 text-yellow-600 rounded-md">Pending Approval</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-yellow-50 text-yellow-600 rounded-md">Pending</span>;
     }
   };
 
@@ -282,72 +374,49 @@ export default function VendorDashboard() {
   return (
     <div className="space-y-10">
       
-      {/* Profile Banner */}
-      <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 liftup">
-        <div className="flex items-center space-x-6">
-          <img
-            src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
-            alt={session?.user?.name}
-            className="w-16 h-16 rounded-full object-cover border-4 border-[var(--primary)] shadow-sm"
-          />
-          <div className="space-y-0.5">
-            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100">{session?.user?.name}</h1>
-            <span className="text-xs text-gray-500 block">{session?.user?.email}</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary)]">Vendor Business Account</span>
-          </div>
-        </div>
-        
-        {isFraud && (
-          <Alert variant="destructive" className="animate-pulse">
-            <AlertTriangle className="w-4 h-4" />
-            <AlertTitle>Suspended</AlertTitle>
-            <AlertDescription>ACCOUNT SUSPENDED: FRAUD FLAGGED</AlertDescription>
-          </Alert>
-        )}
-      </section>
+      {error && (
+        <Alert variant="destructive" className="liftup">
+          <AlertTriangle className="w-4 h-4" />
+          <AlertTitle>Operation error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      {/* Tabs Selector */}
-      <div className="flex border-b border-[var(--border)] pb-px">
-        <button
-          onClick={() => setActiveTab("analytics")}
-          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === "analytics"
-              ? "border-[var(--primary)] text-[var(--primary)]"
-              : "border-transparent text-gray-400 hover:text-slate-600"
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span>Analytics & Stats</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("tickets")}
-          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === "tickets"
-              ? "border-[var(--primary)] text-[var(--primary)]"
-              : "border-transparent text-gray-400 hover:text-slate-600"
-          }`}
-        >
-          <Ticket className="w-4 h-4" />
-          <span>My Listed Tickets</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("bookings")}
-          className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === "bookings"
-              ? "border-[var(--primary)] text-[var(--primary)]"
-              : "border-transparent text-gray-400 hover:text-slate-600"
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          <span>Customer Bookings</span>
-        </button>
-      </div>
+      {success && (
+        <Alert className="border-emerald-250 bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600 liftup animate-pulse">
+          <CheckCircle className="w-4 h-4 text-emerald-500" />
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
 
-      {/* Tab 1 Content: Analytics & Stats */}
-      {activeTab === "analytics" && mounted && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Revenue card */}
+      {/* 1. Vendor Profile Workspace Tab */}
+      {activeTab === "profile" && (
+        <>
+          <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 liftup">
+            <div className="flex items-center space-x-6">
+              <img
+                src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
+                alt={session?.user?.name}
+                className="w-16 h-16 rounded-full object-cover border-4 border-[var(--primary)] shadow-sm"
+              />
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-black text-slate-800 dark:text-slate-100">{session?.user?.name}</h1>
+                <span className="text-xs text-gray-500 block">{session?.user?.email}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary)]">Vendor Business Account</span>
+              </div>
+            </div>
+            
+            {isFraud && (
+              <Alert variant="destructive" className="animate-pulse max-w-xs">
+                <AlertTriangle className="w-4 h-4" />
+                <AlertTitle>Suspended</AlertTitle>
+                <AlertDescription>ACCOUNT SUSPENDED: FRAUD FLAGGED</AlertDescription>
+              </Alert>
+            )}
+          </section>
+
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 flex flex-col justify-between shadow-sm liftup">
               <div className="space-y-2">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Total Revenue</span>
@@ -358,7 +427,6 @@ export default function VendorDashboard() {
               <span className="text-[10px] text-gray-400 font-semibold mt-4 block">Calculated from completed checkout sessions.</span>
             </div>
 
-            {/* Total Bookings card */}
             <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 flex flex-col justify-between shadow-sm liftup">
               <div className="space-y-2">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Customer Bookings</span>
@@ -369,7 +437,6 @@ export default function VendorDashboard() {
               <span className="text-[10px] text-gray-400 font-semibold mt-4 block">Total tickets reserved by commuters.</span>
             </div>
 
-            {/* Active Tickets card */}
             <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 flex flex-col justify-between shadow-sm liftup">
               <div className="space-y-2">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Listed Routes</span>
@@ -379,261 +446,305 @@ export default function VendorDashboard() {
               </div>
               <span className="text-[10px] text-gray-400 font-semibold mt-4 block">Routes currently online or pending review.</span>
             </div>
-          </div>
-
-          {/* Recharts stats chart */}
-          <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm space-y-4 liftup">
-            <h3 className="font-extrabold text-sm uppercase tracking-wider text-gray-500">Revenue Split by Vehicle</h3>
-            <div className="h-60 w-full">
-              {!loadingStats && stats.chartData?.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.chartData}>
-                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <Tooltip cursor={{ fill: 'transparent' }} />
-                    <Bar dataKey="revenue" fill="#386629" radius={[6, 6, 0, 0]}>
-                      {stats.chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-xs text-gray-400">No revenue data available.</div>
-              )}
-            </div>
-          </div>
-        </div>
+          </section>
+        </>
       )}
 
-      {/* Tab 2 Content: Listed Tickets */}
-      {activeTab === "tickets" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Add Ticket Form */}
-          <div className="lg:col-span-1">
-            <form 
-              onSubmit={handleAddTicket}
-              className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm space-y-4 liftup"
-            >
-              <h2 className="font-extrabold text-sm uppercase tracking-wider text-gray-500 flex items-center space-x-2">
-                <PlusCircle className="w-4.5 h-4.5 text-[var(--primary)]" />
-                <span>Add New Ticket</span>
-              </h2>
+      {/* 2. Add Ticket Tab */}
+      {activeTab === "add-ticket" && (
+        <section className="max-w-2xl mx-auto space-y-6">
+          <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+            <PlusCircle className="w-5 h-5 text-[var(--primary)]" />
+            <span>{editingTicketId ? "Modify Listed Route" : "List New Commute Route"}</span>
+          </h2>
 
-              {error && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="w-4 h-4" />
-                  <AlertTitle>Failed to list</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+          <form 
+            onSubmit={handleAddTicket}
+            className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 shadow-sm space-y-5 liftup"
+          >
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400">Route Title</label>
+              <Input
+                type="text"
+                required
+                disabled={isFraud || formLoading}
+                placeholder="AC Premium Express Class"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="h-11 text-xs"
+              />
+            </div>
 
-              {success && (
-                <Alert className="border-emerald-250 bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <AlertTitle>Success</AlertTitle>
-                  <AlertDescription>{success}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400">Route Title</label>
-                <Input
-                  type="text"
-                  required
-                  disabled={isFraud || formLoading}
-                  placeholder="AC Business Class coach"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-               <div className="grid grid-cols-2 gap-3">
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-gray-400">From</label>
-                   <Input
-                     type="text"
-                     required
-                     disabled={isFraud || formLoading}
-                     placeholder="Dhaka"
-                     value={from}
-                     onChange={(e) => setFrom(e.target.value)}
-                     className="h-9 text-xs"
-                   />
-                 </div>
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-gray-400">To</label>
-                   <Input
-                     type="text"
-                     required
-                     disabled={isFraud || formLoading}
-                     placeholder="Cox's Bazar"
-                     value={to}
-                     onChange={(e) => setTo(e.target.value)}
-                     className="h-9 text-xs"
-                   />
-                 </div>
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1">
+                 <label className="text-xs font-bold text-gray-400">Leaving From</label>
+                 <Input
+                   type="text"
+                   required
+                   disabled={isFraud || formLoading}
+                   placeholder="Dhaka"
+                   value={from}
+                   onChange={(e) => setFrom(e.target.value)}
+                   className="h-11 text-xs"
+                 />
                </div>
+               <div className="space-y-1">
+                 <label className="text-xs font-bold text-gray-400">Going To</label>
+                 <Input
+                   type="text"
+                   required
+                   disabled={isFraud || formLoading}
+                   placeholder="Cox's Bazar"
+                   value={to}
+                   onChange={(e) => setTo(e.target.value)}
+                   className="h-11 text-xs"
+                 />
+               </div>
+             </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400">Transport Vehicle</label>
-                <Select
-                  value={transportType}
-                  onChange={(e) => setTransportType(e.target.value)}
-                  disabled={isFraud || formLoading}
-                  className="h-9 text-xs"
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400">Transport Type</label>
+              <Select
+                value={transportType}
+                onChange={(e) => setTransportType(e.target.value)}
+                disabled={isFraud || formLoading}
+                className="h-11 text-xs"
+              >
+                <option value="bus">Coach (Bus)</option>
+                <option value="train">Train</option>
+                <option value="air">Flight (Air)</option>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400">Departure Schedule</label>
+              <Input
+                type="datetime-local"
+                required
+                disabled={isFraud || formLoading}
+                value={departureDateTime}
+                onChange={(e) => setDepartureDateTime(e.target.value)}
+                className="h-11 text-xs text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1">
+                 <label className="text-xs font-bold text-gray-400">Seat Price ($)</label>
+                 <Input
+                   type="number"
+                   required
+                   min="1"
+                   disabled={isFraud || formLoading}
+                   placeholder="25"
+                   value={price}
+                   onChange={(e) => setPrice(e.target.value)}
+                   className="h-11 text-xs"
+                 />
+               </div>
+               <div className="space-y-1">
+                 <label className="text-xs font-bold text-gray-400">Available Seats Qty</label>
+                 <Input
+                   type="number"
+                   required
+                   min="1"
+                   disabled={isFraud || formLoading}
+                   placeholder="40"
+                   value={ticketQuantity}
+                   onChange={(e) => setTicketQuantity(e.target.value)}
+                   className="h-11 text-xs"
+                 />
+               </div>
+             </div>
+
+            {/* Perks checkboxes */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 block">Amenities / Perks</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[var(--input)]/40 p-4 rounded-xl border border-[var(--border)]/50">
+                {["AC", "Wi-Fi", "Water", "Snacks"].map((perk) => (
+                  <label key={perk} className="flex items-center space-x-2 text-xs font-bold text-foreground/70 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={perks.includes(perk)}
+                      onChange={() => handlePerkChange(perk)}
+                      disabled={isFraud || formLoading}
+                      className="w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] cursor-pointer"
+                    />
+                    <span>{perk}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400">Ticket Banner Image</label>
+              <Input
+                type="file"
+                accept="image/*"
+                disabled={isFraud || formLoading}
+                onChange={(e) => setImageFile(e.target.files[0])}
+                className="h-11 text-xs file:mr-4 file:py-2 file:px-3 file:border-0 file:bg-white/10 file:text-[10px] file:font-bold file:text-[var(--primary)] hover:file:opacity-80 flex items-center"
+              />
+            </div>
+
+            <div className="flex space-x-3">
+              {editingTicketId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingTicketId(null);
+                    setTitle("");
+                    setFrom("");
+                    setTo("");
+                    setDepartureDateTime("");
+                    setPrice("");
+                    setTicketQuantity("");
+                    setPerks([]);
+                    setImageFile(null);
+                    router.push("/dashboard/vendor?tab=tickets");
+                  }}
+                  className="flex-1 py-3.5 bg-gray-100 dark:bg-slate-800 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
                 >
-                  <option value="bus">Coach (Bus)</option>
-                  <option value="train">Train</option>
-                  <option value="air">Flight (Air)</option>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400">Departure Schedule</label>
-                <Input
-                  type="datetime-local"
-                  required
-                  disabled={isFraud || formLoading}
-                  value={departureDateTime}
-                  onChange={(e) => setDepartureDateTime(e.target.value)}
-                  className="h-9 text-xs text-slate-800 dark:text-slate-100"
-                />
-              </div>
-
-               <div className="grid grid-cols-2 gap-3">
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-gray-400">Price ($)</label>
-                   <Input
-                     type="number"
-                     required
-                     min="1"
-                     disabled={isFraud || formLoading}
-                     placeholder="25"
-                     value={price}
-                     onChange={(e) => setPrice(e.target.value)}
-                     className="h-9 text-xs"
-                   />
-                 </div>
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-gray-400">Seats Qty</label>
-                   <Input
-                     type="number"
-                     required
-                     min="1"
-                     disabled={isFraud || formLoading}
-                     placeholder="40"
-                     value={ticketQuantity}
-                     onChange={(e) => setTicketQuantity(e.target.value)}
-                     className="h-9 text-xs"
-                   />
-                 </div>
-               </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400">Ticket Banner Image</label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  disabled={isFraud || formLoading}
-                  onChange={(e) => setImageFile(e.target.files[0])}
-                  className="h-9 text-xs file:mr-4 file:py-0 file:px-0 file:border-0 file:bg-transparent file:text-[10px] file:font-bold file:text-[var(--primary)] hover:file:opacity-80"
-                />
-              </div>
-
+                  Cancel Edit
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={isFraud || formLoading}
-                className="w-full py-3 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all-300 shadow-md shadow-emerald-600/10 flex items-center justify-center space-x-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="flex-1 py-3.5 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center space-x-2 disabled:bg-gray-450 disabled:cursor-not-allowed"
               >
                 {formLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <span>Add Ticket</span>
+                  <span>{editingTicketId ? "Save Changes" : "Create Ticket"}</span>
                 )}
               </button>
-            </form>
-          </div>
-
-          {/* My Tickets List (2 Columns) */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-lg font-extrabold flex items-center space-x-2 text-slate-800 dark:text-slate-200">
-              <Ticket className="w-5 h-5 text-[var(--primary)]" />
-              <span>My Listed Tickets</span>
-            </h2>
-
-            {loadingTickets ? (
-              <div className="h-40 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-2xl" />
-            ) : tickets.length === 0 ? (
-              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-8 text-center text-gray-500 text-xs font-medium liftup">
-                No tickets listed by your company yet.
-              </div>
-            ) : (
-              <>
-                <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm liftup">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)] font-bold uppercase text-gray-500 tracking-wider">
-                          <th className="p-4">Route Title</th>
-                          <th className="p-4">Transport</th>
-                          <th className="p-4">Seat price</th>
-                          <th className="p-4">Quantity</th>
-                          <th className="p-4">Approval Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium">
-                        {currentTickets.map((t) => (
-                          <tr key={t._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
-                            <td className="p-4">
-                              <span className="font-bold text-slate-800 dark:text-slate-200 block">{t.title}</span>
-                              <span className="text-[10px] text-gray-400 block">{t.from} ➔ {t.to}</span>
-                            </td>
-                            <td className="p-4 capitalize">{t.transportType}</td>
-                            <td className="p-4 font-bold text-slate-800 dark:text-slate-100">${t.price}</td>
-                            <td className="p-4">{t.ticketQuantity} remaining</td>
-                            <td className="p-4">{getStatusBadge(t.status)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Ticket pagination */}
-                {totalTicketPages > 1 && (
-                  <div className="flex justify-center items-center space-x-4 pt-2">
-                    <button
-                      onClick={() => setTicketPage(prev => Math.max(prev - 1, 1))}
-                      disabled={ticketPage === 1}
-                      className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-xs font-bold text-gray-500">
-                      Page {ticketPage} of {totalTicketPages}
-                    </span>
-                    <button
-                      onClick={() => setTicketPage(prev => Math.min(prev + 1, totalTicketPages))}
-                      disabled={ticketPage === totalTicketPages}
-                      className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+            </div>
+          </form>
+        </section>
       )}
 
-      {/* Tab 3 Content: Customer Bookings */}
+      {/* 3. My Added Tickets Tab */}
+      {activeTab === "tickets" && (
+        <section className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-extrabold text-slate-850 dark:text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+              <Ticket className="w-5 h-5 text-[var(--primary)]" />
+              <span>My Listed Commutes</span>
+            </h2>
+            <button
+              onClick={() => router.push("/dashboard/vendor?tab=add-ticket")}
+              className="py-2 px-4 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>List Route</span>
+            </button>
+          </div>
+
+          {loadingTickets ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-60 bg-gray-200 dark:bg-slate-800 rounded-2xl" />
+              ))}
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-12 text-center text-gray-500 text-sm font-medium liftup">
+              No tickets listed by your company yet.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {currentTickets.map((t) => {
+                  const isRejected = t.status === "rejected";
+                  return (
+                    <div 
+                      key={t._id} 
+                      className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-5 flex flex-col justify-between shadow-sm liftup"
+                    >
+                      <div className="space-y-4">
+                        <img 
+                          src={t.image || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=400"} 
+                          alt={t.title} 
+                          className="w-full h-36 object-cover rounded-2xl border border-[var(--border)]/30"
+                        />
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-[var(--primary)] tracking-wider">
+                          <span>{t.transportType} Class</span>
+                          {getStatusBadge(t.status)}
+                        </div>
+                        <div className="space-y-1.5">
+                          <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100 truncate">{t.title}</h3>
+                          <p className="text-xs text-gray-500 font-medium">{t.from} ➔ {t.to}</p>
+                          <p className="text-xs text-gray-400 font-semibold">Departs: {new Date(t.departureDateTime).toLocaleString()}</p>
+                          {t.perks && t.perks.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {t.perks.map(p => (
+                                <span key={p} className="px-2 py-0.5 bg-[var(--primary)]/10 text-[var(--primary)] rounded text-[9px] font-extrabold tracking-wider">{p}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-slate-800/80 mt-4">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-400 font-bold">Fare: <strong>${t.price}</strong></span>
+                          <span className="text-gray-400 font-bold">Seats: <strong>{t.ticketQuantity} left</strong></span>
+                        </div>
+                        <div className="flex space-x-2 pt-1">
+                          <button
+                            onClick={() => handleSelectUpdate(t)}
+                            disabled={isRejected || actionLoading === t._id}
+                            className="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-900/30 text-indigo-650 dark:text-indigo-400 font-bold text-xs rounded-xl border border-indigo-100/50 dark:border-indigo-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Update</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTicket(t._id)}
+                            disabled={isRejected || actionLoading === t._id}
+                            className="flex-1 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl border border-red-100/50 dark:border-red-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Ticket list pagination */}
+              {totalTicketPages > 1 && (
+                <div className="flex justify-center items-center space-x-4 pt-4">
+                  <button
+                    onClick={() => setTicketPage(prev => Math.max(prev - 1, 1))}
+                    disabled={ticketPage === 1}
+                    className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs font-bold text-gray-500">
+                    Page {ticketPage} of {totalTicketPages}
+                  </span>
+                  <button
+                    onClick={() => setTicketPage(prev => Math.min(prev + 1, totalTicketPages))}
+                    disabled={ticketPage === totalTicketPages}
+                    className="px-3.5 py-1.5 border border-[var(--border)] rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors bg-white dark:bg-slate-900"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {/* 4. Requested Bookings Tab */}
       {activeTab === "bookings" && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-extrabold flex items-center space-x-2 text-slate-800 dark:text-slate-200">
+        <section className="space-y-4">
+          <h2 className="text-xl font-extrabold flex items-center space-x-2 text-slate-800 dark:text-slate-200 uppercase tracking-wider">
             <Calendar className="w-5 h-5 text-[var(--primary)]" />
             <span>Requested Customer Bookings</span>
           </h2>
@@ -713,7 +824,7 @@ export default function VendorDashboard() {
 
               {/* Bookings pagination */}
               {totalBookingPages > 1 && (
-                <div className="flex justify-center items-center space-x-4 pt-2">
+                <div className="flex justify-center items-center space-x-4 pt-4">
                   <button
                     onClick={() => setBookingPage(prev => Math.max(prev - 1, 1))}
                     disabled={bookingPage === 1}
@@ -735,10 +846,76 @@ export default function VendorDashboard() {
               )}
             </>
           )}
-        </div>
+        </section>
+      )}
+
+      {/* 5. Revenue Overview Tab */}
+      {activeTab === "revenue" && mounted && (
+        <section className="space-y-6">
+          <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+            <BarChart3 className="w-5 h-5 text-[var(--primary)]" />
+            <span>Revenue Breakdown Dashboard</span>
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 flex flex-col justify-between shadow-sm liftup">
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Accumulated Earnings</span>
+                <span className="text-4xl font-black text-[var(--primary)]">
+                  ${loadingStats ? "..." : <CountUp end={stats.revenue} />}
+                </span>
+              </div>
+              <span className="text-[10px] text-gray-400 font-semibold mt-4 block">Based on cleared commuter card checkouts.</span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 flex flex-col justify-between shadow-sm liftup">
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Total Seats Purchased</span>
+                <span className="text-4xl font-black text-[var(--accent)]">
+                  {loadingStats ? "..." : <CountUp end={stats.totalBookings} />}
+                </span>
+              </div>
+              <span className="text-[10px] text-gray-400 font-semibold mt-4 block">Commuters booked through listed classes.</span>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 shadow-sm space-y-4 liftup">
+            <h3 className="font-extrabold text-sm uppercase tracking-wider text-gray-500">Sales Split by Transport Type</h3>
+            <div className="h-64 w-full">
+              {!loadingStats && stats.chartData?.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.chartData}>
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
+                    <Tooltip cursor={{ fill: 'transparent' }} />
+                    <Bar dataKey="revenue" fill="#386629" radius={[6, 6, 0, 0]}>
+                      {stats.chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-gray-400">No revenue split data online.</div>
+              )}
+            </div>
+          </div>
+        </section>
       )}
 
     </div>
+  );
+}
+
+export default function VendorDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <VendorDashboardContent />
+    </Suspense>
   );
 }
 export const dynamic = "force-dynamic";
