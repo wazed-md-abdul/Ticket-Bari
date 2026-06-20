@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signUp } from "@/lib/auth-client";
-import { UserPlus, User, Mail, Key, Image, AlertCircle, Sparkles } from "lucide-react";
+import { UserPlus, User, Mail, Key, Image, AlertCircle, Sparkles, Ticket } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
@@ -74,112 +74,146 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-2xl p-8 space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-extrabold tracking-tight">Create Account</h1>
-          <p className="text-sm text-gray-500">Sign up to purchase tickets or list schedules</p>
-        </div>
-
-        {error && (
-          <div className="flex items-center space-x-2 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-xs font-semibold border border-red-200/50 dark:border-red-950/50">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-1">
-              <User className="w-3 h-3" />
-              <span>Full Name</span>
-            </label>
-            <Input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-1">
-              <Mail className="w-3 h-3" />
-              <span>Email Address</span>
-            </label>
-            <Input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-1">
-              <Key className="w-3 h-3" />
-              <span>Password</span>
-            </label>
-            <Input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-1">
-              <Sparkles className="w-3 h-3" />
-              <span>Register As</span>
-            </label>
-            <Select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="user">User (Passenger)</option>
-              <option value="vendor">Vendor (Transport Company)</option>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-1">
-              <Image className="w-3 h-3" />
-              <span>Profile Image</span>
-            </label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="file:mr-4 file:py-0 file:px-0 file:border-0 file:bg-transparent file:text-xs file:font-semibold file:text-[var(--primary)] hover:file:opacity-80"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white font-bold rounded-xl text-sm hover:opacity-95 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
-            ) : (
-              <>
-                <UserPlus className="w-4 h-4" />
-                <span>Register Account</span>
-              </>
-            )}
-          </button>
-        </form>
-
-        <p className="text-center text-xs text-gray-500">
-          Already have an account?{" "}
-          <Link href="/auth/signin" className="text-indigo-500 hover:underline font-semibold">
-            Sign In
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[var(--background)]">
+      {/* Left side: Relevant Travel Image */}
+      <div className="hidden lg:flex relative bg-slate-900 overflow-hidden items-center justify-center">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-70 transition-transform duration-[10s] hover:scale-105"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&q=80&w=1080')" }}
+        />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20" />
+        
+        {/* Floating Brand Elements */}
+        <div className="relative z-10 p-12 max-w-lg text-white space-y-6">
+          <Link href="/" className="flex items-center space-x-2 w-fit bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
+            <Ticket className="w-5 h-5 text-[var(--primary)]" />
+            <span className="font-sans font-black tracking-widest text-white text-sm">
+              TICKET<span className="text-[var(--primary)]">BARI</span>
+            </span>
           </Link>
-        </p>
+          <div className="space-y-3">
+            <h2 className="text-3xl font-black leading-tight">Create Your Passenger Pass</h2>
+            <p className="text-sm text-slate-300 leading-relaxed font-medium">
+              Join thousands of travelers who book bus seats, rail commutes, and flight schedules instantly.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right side: Sign Up Form */}
+      <div className="flex items-center justify-center px-6 py-12 lg:px-16">
+        <div className="w-full max-w-md bg-[var(--card)] rounded-3xl border border-[var(--border)] shadow-xl p-8 sm:p-10 space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Create Account</h1>
+            <p className="text-sm text-foreground/60">Sign up to purchase tickets or list schedules</p>
+          </div>
+
+          {error && (
+            <div className="flex items-center space-x-2 bg-red-50 dark:bg-red-955/20 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-xs font-semibold border border-red-200/50 dark:border-red-955/50">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider flex items-center space-x-1">
+                <User className="w-3 h-3 text-[var(--primary)]" />
+                <span>Full Name</span>
+              </label>
+              <Input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                className="bg-[var(--input)] border-[var(--border)] text-foreground placeholder:text-foreground/40 h-11"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider flex items-center space-x-1">
+                <Mail className="w-3 h-3 text-[var(--primary)]" />
+                <span>Email Address</span>
+              </label>
+              <Input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="bg-[var(--input)] border-[var(--border)] text-foreground placeholder:text-foreground/40 h-11"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider flex items-center space-x-1">
+                <Key className="w-3 h-3 text-[var(--primary)]" />
+                <span>Password</span>
+              </label>
+              <Input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="bg-[var(--input)] border-[var(--border)] text-foreground placeholder:text-foreground/40 h-11"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider flex items-center space-x-1">
+                <Sparkles className="w-3 h-3 text-[var(--primary)]" />
+                <span>Register As</span>
+              </label>
+              <Select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="bg-[var(--input)] border-[var(--border)] text-foreground h-11"
+              >
+                <option value="user">User (Passenger)</option>
+                <option value="vendor">Vendor (Transport Company)</option>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider flex items-center space-x-1">
+                <Image className="w-3 h-3 text-[var(--primary)]" />
+                <span>Profile Image</span>
+              </label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="bg-[var(--input)] border-[var(--border)] text-foreground file:mr-4 file:py-2 file:px-3 file:border-0 file:bg-white/10 file:text-xs file:font-semibold file:text-[var(--primary)] hover:file:opacity-80 h-11 flex items-center"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-[var(--primary)] hover:opacity-95 text-white font-bold rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center space-x-2 shadow-md"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  <span>Register Account</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-foreground/60">
+            Already have an account?{" "}
+            <Link href="/auth/signin" className="text-[var(--primary)] hover:underline font-semibold">
+              Sign In
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
