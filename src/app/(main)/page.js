@@ -84,7 +84,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const adsRes = await fetch("http://localhost:5000/api/advertisements");
+        const adsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/advertisements");
         if (adsRes.ok) {
           const adsData = await adsRes.json();
           setAds(adsData);
@@ -96,7 +96,7 @@ export default function HomePage() {
       }
 
       try {
-        const latestRes = await fetch("http://localhost:5000/api/tickets?limit=8");
+        const latestRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/tickets?limit=8");
         if (latestRes.ok) {
           const latestData = await latestRes.json();
           setLatestTickets(latestData.tickets || []);

@@ -27,7 +27,7 @@ export default function TicketDetailsPage() {
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/tickets/${id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${id}`);
         if (!res.ok) {
           throw new Error("Failed to load ticket details.");
         }
@@ -90,7 +90,7 @@ export default function TicketDetailsPage() {
         console.error("Error retrieving JWT token:", e);
       }
 
-      const res = await fetch("http://localhost:5000/api/bookings", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

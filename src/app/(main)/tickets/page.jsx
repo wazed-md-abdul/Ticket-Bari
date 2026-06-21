@@ -46,7 +46,7 @@ function TicketsContent() {
         const queryParams = new URLSearchParams(searchParams);
         queryParams.set("limit", "8"); // 8 tickets per page
         
-        const res = await fetch(`http://localhost:5000/api/tickets?${queryParams.toString()}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets?${queryParams.toString()}`);
         if (res.ok) {
           const data = await res.json();
           setTickets(data.tickets || []);
