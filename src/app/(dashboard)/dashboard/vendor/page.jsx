@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import CountUp from "@/components/CountUp";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  Cell
+  Cell, CartesianGrid
 } from "recharts";
 import {
   User, Mail, Ticket, PlusCircle, CheckCircle, XCircle,
@@ -18,6 +18,32 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
+
+const CustomTooltip = ({ active, payload, label, activeMetric }) => {
+  if (active && payload && payload.length) {
+    const value = payload[0].value;
+    const metricLabel = 
+      activeMetric === "revenue" ? "Revenue" :
+      activeMetric === "bookings" ? "Bookings" : "Tickets Sold";
+    const formattedValue = activeMetric === "revenue" ? `$${value.toLocaleString()}` : value.toLocaleString();
+    
+    const dotColor = 
+      activeMetric === "revenue" ? "bg-emerald-500" :
+      activeMetric === "bookings" ? "bg-blue-500" : "bg-purple-500";
+
+    return (
+      <div className="bg-slate-950/95 text-slate-100 border border-slate-800 rounded-xl px-3.5 py-2.5 shadow-xl backdrop-blur-md">
+        <p className="text-[11px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">{label}</p>
+        <div className="flex items-center gap-2">
+          <span className={`w-2.5 h-2.5 rounded-sm ${dotColor}`} />
+          <span className="text-xs font-semibold text-slate-300">{metricLabel}:</span>
+          <span className="text-xs font-black text-white ml-auto">{formattedValue}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 function VendorDashboardContent() {
   const router = useRouter();
@@ -31,6 +57,9 @@ function VendorDashboardContent() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Chart state
+  const [activeMetric, setActiveMetric] = useState("revenue");
 
   // Profile modal states
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -90,7 +119,7 @@ function VendorDashboardContent() {
 
   const [tickets, setTickets] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [stats, setStats] = useState({ revenue: 0, totalBookings: 0, chartData: [] });
+  const [stats, setStats] = useState({ revenue: 0, totalBookings: 0, totalTicketsSold: 0, chartData: [] });
   const [isFraud, setIsFraud] = useState(false);
 
   // Loading states
@@ -880,29 +909,107 @@ function VendorDashboardContent() {
             ))}
           </div>
 
-          {/* Revenue Chart */}
-          <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-5 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[var(--primary)]" />
-              Revenue by Transport Type
-            </h3>
-            <div className="h-64 w-full">
-              {!loadingStats && stats.chartData?.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.chartData}>
-                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <Tooltip cursor={{ fill: 'transparent' }} />
-                    <Bar dataKey="revenue" fill="#386629" radius={[8, 8, 0, 0]}>
-                      {stats.chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-xs text-gray-400">No revenue data available yet.</div>
-              )}
+          {/* Interactive Sales & Revenue Chart */}
+          <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl overflow-hidden shadow-sm flex flex-col">
+            {/* Card Header with Title and Selector Tabs */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[var(--border)] dark:border-slate-800">
+              <div className="p-6">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[var(--primary)]" />
+                  Analytics Overview
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">Interactive overview of transport performance metrics.</p>
+              </div>
+              
+              {/* Interactive Tabs */}
+              <div className="flex border-t md:border-t-0 border-[var(--border)] dark:border-slate-800 md:ml-auto divide-x divide-[var(--border)] dark:divide-slate-800">
+                <button
+                  onClick={() => setActiveMetric("revenue")}
+                  className={`px-6 py-4 flex flex-col items-start gap-1 transition-colors duration-200 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 min-w-[120px] md:min-w-[140px] text-left relative focus:outline-none ${
+                    activeMetric === "revenue" ? "bg-gray-50/30 dark:bg-slate-800/10" : ""
+                  }`}
+                >
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Revenue</span>
+                  <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                    ${stats.revenue?.toLocaleString() || 0}
+                  </span>
+                  {activeMetric === "revenue" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveMetric("bookings")}
+                  className={`px-6 py-4 flex flex-col items-start gap-1 transition-colors duration-200 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 min-w-[120px] md:min-w-[140px] text-left relative focus:outline-none ${
+                    activeMetric === "bookings" ? "bg-gray-50/30 dark:bg-slate-800/10" : ""
+                  }`}
+                >
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bookings</span>
+                  <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                    {stats.totalBookings || 0}
+                  </span>
+                  {activeMetric === "bookings" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveMetric("ticketsSold")}
+                  className={`px-6 py-4 flex flex-col items-start gap-1 transition-colors duration-200 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 min-w-[120px] md:min-w-[140px] text-left relative focus:outline-none ${
+                    activeMetric === "ticketsSold" ? "bg-gray-50/30 dark:bg-slate-800/10" : ""
+                  }`}
+                >
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tickets Sold</span>
+                  <span className="text-xl font-black text-purple-600 dark:text-purple-400">
+                    {stats.totalTicketsSold || 0}
+                  </span>
+                  {activeMetric === "ticketsSold" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Card Body with Chart */}
+            <div className="p-6">
+              <div className="h-72 w-full mt-2">
+                {!loadingStats && stats.chartData?.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="#94a3b8" 
+                        fontSize={11} 
+                        tickLine={false} 
+                        axisLine={false}
+                        dy={10}
+                      />
+                      <YAxis 
+                        stroke="#94a3b8" 
+                        fontSize={11} 
+                        tickLine={false} 
+                        axisLine={false}
+                        dx={-5}
+                        tickFormatter={(v) => activeMetric === "revenue" ? `$${v}` : v}
+                      />
+                      <Tooltip 
+                        cursor={{ fill: 'rgba(148, 163, 184, 0.05)', radius: 8 }} 
+                        content={<CustomTooltip activeMetric={activeMetric} />}
+                      />
+                      <Bar 
+                        dataKey={activeMetric} 
+                        fill={
+                          activeMetric === "revenue" ? "#10b981" :
+                          activeMetric === "bookings" ? "#3b82f6" : "#8b5cf6"
+                        } 
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={60}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-xs text-gray-400">No revenue data available yet.</div>
+                )}
+              </div>
             </div>
           </div>
         </div>
