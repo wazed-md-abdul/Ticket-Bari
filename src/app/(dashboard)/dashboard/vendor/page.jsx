@@ -93,7 +93,7 @@ function VendorDashboardContent() {
 
     // Check fraud
     try {
-      const usersRes = await fetch("http://localhost:5000/api/admin/users", {
+      const usersRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/admin/users", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (usersRes.ok) {
@@ -105,7 +105,7 @@ function VendorDashboardContent() {
 
     // Load Tickets
     try {
-      const ticketsRes = await fetch("http://localhost:5000/api/vendor/tickets", {
+      const ticketsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/vendor/tickets", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (ticketsRes.ok) setTickets(await ticketsRes.json());
@@ -114,7 +114,7 @@ function VendorDashboardContent() {
 
     // Load Bookings
     try {
-      const bookingsRes = await fetch("http://localhost:5000/api/bookings", {
+      const bookingsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/bookings", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (bookingsRes.ok) setBookings(await bookingsRes.json());
@@ -123,7 +123,7 @@ function VendorDashboardContent() {
 
     // Load Stats
     try {
-      const statsRes = await fetch("http://localhost:5000/api/vendor/stats", {
+      const statsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/vendor/stats", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (statsRes.ok) setStats(await statsRes.json());
@@ -159,7 +159,7 @@ function VendorDashboardContent() {
 
       const token = await getToken();
       const isEdit = !!editingTicketId;
-      const url = isEdit ? `http://localhost:5000/api/tickets/${editingTicketId}` : "http://localhost:5000/api/tickets";
+      const url = isEdit ? `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${editingTicketId}` : "${process.env.NEXT_PUBLIC_API_URL}/api/tickets";
       const method = isEdit ? "PUT" : "POST";
       const payload = { title, from, to, transportType, departureDateTime, price: Number(price), ticketQuantity: Number(ticketQuantity), perks };
       if (imageUrl) payload.image = imageUrl;
@@ -209,7 +209,7 @@ function VendorDashboardContent() {
     setError(""); setSuccess(""); setActionLoading(ticketId);
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -224,7 +224,7 @@ function VendorDashboardContent() {
     setError(""); setActionLoading(bookingId);
     try {
       const token = await getToken();
-      await fetch(`http://localhost:5000/api/bookings/${bookingId}/status`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings/${bookingId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ status }),

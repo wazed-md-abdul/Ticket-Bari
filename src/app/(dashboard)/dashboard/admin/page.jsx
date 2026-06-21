@@ -69,7 +69,7 @@ function AdminDashboardContent() {
 
     // Fetch all users
     try {
-      const usersRes = await fetch("http://localhost:5000/api/admin/users", {
+      const usersRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/admin/users", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (usersRes.ok) {
@@ -84,7 +84,7 @@ function AdminDashboardContent() {
 
     // Fetch all tickets
     try {
-      const ticketsRes = await fetch("http://localhost:5000/api/admin/tickets", {
+      const ticketsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/admin/tickets", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (ticketsRes.ok) {
@@ -112,7 +112,7 @@ function AdminDashboardContent() {
     setActionLoading(ticketId);
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ status }),
@@ -138,7 +138,7 @@ function AdminDashboardContent() {
     setActionLoading(ticketId + "_ad");
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ isAdvertised: !currentAdState }),
@@ -164,7 +164,7 @@ function AdminDashboardContent() {
     setActionLoading(userId + "_role");
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ role: newRole }),
@@ -198,7 +198,7 @@ function AdminDashboardContent() {
     setActionLoading(userId + "_fraud");
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ isFraud: !currentFraudState }),
