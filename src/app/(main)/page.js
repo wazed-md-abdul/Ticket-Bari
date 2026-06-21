@@ -144,7 +144,7 @@ export default function HomePage() {
     <div className="space-y-24 pb-24 bg-[var(--background)]">
       
       {/* 1. CREATIVE HERO SECTION WITH ACCENT GLOWS & CUSTOM SLIDESHOW */}
-      <section className="relative min-h-[720px] lg:h-[720px] w-full overflow-hidden flex items-center justify-center py-12 lg:py-0">
+      <section className="relative min-h-[720px] lg:h-[720px] w-full flex items-center justify-center py-12 lg:py-0">
         {/* Background Swiper Slideshow */}
         <div className="absolute inset-0 z-0">
           {(isDarkMode ? darkImages : lightImages).map((src, index) => (
