@@ -119,7 +119,7 @@ function UserDashboardContent() {
 
       // Fetch Bookings
       try {
-        const bookingsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/bookings", {
+        const bookingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (bookingsRes.ok) {
@@ -134,7 +134,7 @@ function UserDashboardContent() {
 
       // Fetch Transactions
       try {
-        const txRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/transactions", {
+        const txRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transactions`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (txRes.ok) {

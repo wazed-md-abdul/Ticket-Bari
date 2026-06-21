@@ -93,7 +93,7 @@ function VendorDashboardContent() {
 
     // Check fraud
     try {
-      const usersRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/admin/users", {
+      const usersRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (usersRes.ok) {
@@ -105,7 +105,7 @@ function VendorDashboardContent() {
 
     // Load Tickets
     try {
-      const ticketsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/vendor/tickets", {
+      const ticketsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vendor/tickets`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (ticketsRes.ok) setTickets(await ticketsRes.json());
@@ -114,7 +114,7 @@ function VendorDashboardContent() {
 
     // Load Bookings
     try {
-      const bookingsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/bookings", {
+      const bookingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (bookingsRes.ok) setBookings(await bookingsRes.json());
@@ -123,7 +123,7 @@ function VendorDashboardContent() {
 
     // Load Stats
     try {
-      const statsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/vendor/stats", {
+      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vendor/stats`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (statsRes.ok) setStats(await statsRes.json());
@@ -159,7 +159,7 @@ function VendorDashboardContent() {
 
       const token = await getToken();
       const isEdit = !!editingTicketId;
-      const url = isEdit ? `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${editingTicketId}` : "${process.env.NEXT_PUBLIC_API_URL}/api/tickets";
+      const url = isEdit ? `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${editingTicketId}` : `${process.env.NEXT_PUBLIC_API_URL}/api/tickets`;
       const method = isEdit ? "PUT" : "POST";
       const payload = { title, from, to, transportType, departureDateTime, price: Number(price), ticketQuantity: Number(ticketQuantity), perks };
       if (imageUrl) payload.image = imageUrl;

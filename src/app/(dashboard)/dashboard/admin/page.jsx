@@ -69,7 +69,7 @@ function AdminDashboardContent() {
 
     // Fetch all users
     try {
-      const usersRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/admin/users", {
+      const usersRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (usersRes.ok) {
@@ -84,7 +84,7 @@ function AdminDashboardContent() {
 
     // Fetch all tickets
     try {
-      const ticketsRes = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/admin/tickets", {
+      const ticketsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tickets`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (ticketsRes.ok) {
