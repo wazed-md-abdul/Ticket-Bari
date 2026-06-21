@@ -569,26 +569,26 @@ function VendorDashboardContent() {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Route Title</label>
               <Input type="text" required disabled={isFraud || formLoading} placeholder="AC Premium Express Class"
-                value={title} onChange={(e) => setTitle(e.target.value)} className="h-11 text-xs" />
+                value={title} onChange={(e) => setTitle(e.target.value)} className="text-xs" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Leaving From</label>
                 <Input type="text" required disabled={isFraud || formLoading} placeholder="Dhaka"
-                  value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 text-xs" />
+                  value={from} onChange={(e) => setFrom(e.target.value)} className="text-xs" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Going To</label>
                 <Input type="text" required disabled={isFraud || formLoading} placeholder="Cox's Bazar"
-                  value={to} onChange={(e) => setTo(e.target.value)} className="h-11 text-xs" />
+                  value={to} onChange={(e) => setTo(e.target.value)} className="text-xs" />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Transport Type</label>
               <Select value={transportType} onChange={(e) => setTransportType(e.target.value)}
-                disabled={isFraud || formLoading} className="h-11 text-xs">
+                disabled={isFraud || formLoading} className="text-xs">
                 <option value="bus">Coach (Bus)</option>
                 <option value="train">Train</option>
                 <option value="air">Flight (Air)</option>
@@ -599,19 +599,19 @@ function VendorDashboardContent() {
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Departure Schedule</label>
               <Input type="datetime-local" required disabled={isFraud || formLoading}
                 value={departureDateTime} onChange={(e) => setDepartureDateTime(e.target.value)}
-                className="h-11 text-xs text-slate-800 dark:text-slate-100" />
+                className="text-xs text-slate-800 dark:text-slate-100" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Seat Price ($)</label>
                 <Input type="number" required min="1" disabled={isFraud || formLoading} placeholder="25"
-                  value={price} onChange={(e) => setPrice(e.target.value)} className="h-11 text-xs" />
+                  value={price} onChange={(e) => setPrice(e.target.value)} className="text-xs" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Available Seats</label>
                 <Input type="number" required min="1" disabled={isFraud || formLoading} placeholder="40"
-                  value={ticketQuantity} onChange={(e) => setTicketQuantity(e.target.value)} className="h-11 text-xs" />
+                  value={ticketQuantity} onChange={(e) => setTicketQuantity(e.target.value)} className="text-xs" />
               </div>
             </div>
 
@@ -634,7 +634,7 @@ function VendorDashboardContent() {
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ticket Banner Image</label>
               <Input type="file" accept="image/*" disabled={isFraud || formLoading}
                 onChange={(e) => setImageFile(e.target.files[0])}
-                className="h-11 text-xs file:mr-4 file:py-2 file:px-3 file:border-0 file:bg-white/10 file:text-[10px] file:font-bold file:text-[var(--primary)] hover:file:opacity-80 flex items-center" />
+                className="text-xs file:mr-4 file:py-1 file:px-2 file:border-0 file:bg-[var(--primary)]/10 file:text-[var(--primary)] file:rounded-md hover:file:opacity-80 flex items-center" />
             </div>
 
             <div className="flex gap-3 pt-2">
@@ -682,12 +682,12 @@ function VendorDashboardContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder="Search by title, from, to..."
                 value={ticketSearch} onChange={(e) => setTicketSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all" />
+                className="w-full pl-10 pr-4 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all" />
             </div>
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-400" />
               <select value={ticketStatusFilter} onChange={(e) => setTicketStatusFilter(e.target.value)}
-                className="px-3 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30">
+                className="px-3 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]">
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
@@ -804,12 +804,12 @@ function VendorDashboardContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder="Search by customer or ticket..."
                 value={bookingSearch} onChange={(e) => setBookingSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all" />
+                className="w-full pl-10 pr-4 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all" />
             </div>
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-400" />
               <select value={bookingStatusFilter} onChange={(e) => setBookingStatusFilter(e.target.value)}
-                className="px-3 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30">
+                className="px-3 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]">
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="accepted">Accepted</option>
@@ -1039,7 +1039,7 @@ function VendorDashboardContent() {
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className="w-full px-3 h-10 rounded-lg bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
                 />
               </div>
               
@@ -1049,7 +1049,7 @@ function VendorDashboardContent() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setEditImageFile(e.target.files[0])}
-                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground file:mr-4 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary)]/10 file:text-[var(--primary)] hover:file:opacity-80 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] flex items-center"
+                  className="w-full px-3 py-1.5 h-10 rounded-lg bg-[var(--input)] border border-[var(--border)] text-foreground file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary)]/10 file:text-[var(--primary)] hover:file:opacity-80 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] flex items-center"
                 />
               </div>
 

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const lightImages = [
   "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920", // Luxury Bus Coach
@@ -247,10 +248,10 @@ export default function HomePage() {
                     <Calendar className="w-3 h-3 text-[var(--primary)]" />
                     <span>Travel Date</span>
                   </label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={searchForm.date}
-                    onChange={(e) => setSearchForm({ ...searchForm, date: e.target.value })}
+                    onChange={(dateStr) => setSearchForm({ ...searchForm, date: dateStr })}
+                    placeholder="Pick a date"
                     className="bg-[var(--input)] border-[var(--border)] text-foreground focus-visible:ring-[var(--primary)] h-11"
                   />
                 </div>

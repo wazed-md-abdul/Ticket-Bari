@@ -45,8 +45,8 @@
   --card: #D8F3E5;
   --card-foreground: #0F172A;
   
-  --border: #A7E0C1;
-  --input: #E7F8F0;
+  --border: #e2e8f0;
+  --input: #f8fafc;
   --ring: #059669;
 }
 
@@ -68,8 +68,8 @@
   --card: #0B0F19;
   --card-foreground: #F9FAFB;
   
-  --border: #1F2937;
-  --input: #111827;
+  --border: #1f2937;
+  --input: #030712;
   --ring: #34D399;
 }
 
@@ -148,4 +148,103 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
+}
+
+/* Premium Shadcn UI input, select, and textarea styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="file"],
+select,
+textarea {
+  display: flex;
+  height: 2.5rem; /* h-10 */
+  width: 100%;
+  border-radius: 0.5rem; /* rounded-lg (8px) */
+  border: 1px solid var(--border);
+  background-color: rgba(248, 250, 252, 0.4); /* bg-slate-50/40 in light */
+  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+  color: var(--foreground);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="time"],
+.dark input[type="file"],
+.dark select,
+.dark textarea {
+  background-color: rgba(3, 7, 18, 0.4); /* bg-zinc-950/40 in dark */
+  border-color: var(--border);
+}
+
+/* Placeholders */
+input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: #94a3b8; /* slate-400 */
+}
+.dark input::placeholder,
+.dark select::placeholder,
+.dark textarea::placeholder {
+  color: #64748b; /* slate-500 */
+}
+
+/* File input text styling override */
+input[type="file"] {
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+}
+
+/* Focus states */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem; /* 4px */
+  border: 1px solid var(--border);
+  cursor: pointer;
+  accent-color: var(--primary);
+  background-color: transparent;
+}
+
+/* Calendar & time picker indicators styling */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.4);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator,
+input[type="time"]:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
 }

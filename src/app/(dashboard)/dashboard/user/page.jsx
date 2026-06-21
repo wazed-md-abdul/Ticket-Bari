@@ -184,7 +184,7 @@ function UserDashboardContent() {
 
       // Fetch Bookings
       try {
-        const bookingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings`, {
+        const bookingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings?as=passenger`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (bookingsRes.ok) {
@@ -489,7 +489,7 @@ function UserDashboardContent() {
                 placeholder="Search by title or transport type..."
                 value={bookingSearch}
                 onChange={(e) => setBookingSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all"
+                className="w-full pl-10 pr-4 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -497,7 +497,7 @@ function UserDashboardContent() {
               <select
                 value={bookingStatusFilter}
                 onChange={(e) => setBookingStatusFilter(e.target.value)}
-                className="px-3 py-2.5 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+                className="px-3 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -685,7 +685,7 @@ function UserDashboardContent() {
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  className="w-full px-3 h-10 rounded-lg bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
                 />
               </div>
               
@@ -695,7 +695,7 @@ function UserDashboardContent() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setEditImageFile(e.target.files[0])}
-                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground file:mr-4 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary)]/10 file:text-[var(--primary)] hover:file:opacity-80 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] flex items-center"
+                  className="w-full px-3 py-1.5 h-10 rounded-lg bg-[var(--input)] border border-[var(--border)] text-foreground file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary)]/10 file:text-[var(--primary)] hover:file:opacity-80 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] flex items-center"
                 />
               </div>
 
