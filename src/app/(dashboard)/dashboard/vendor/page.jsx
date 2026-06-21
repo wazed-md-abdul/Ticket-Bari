@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { authClient } from "@/lib/auth-client";
+import { authClient, updateUser } from "@/lib/auth-client";
 import { useSearchParams, useRouter } from "next/navigation";
 import CountUp from "@/components/CountUp";
 import {
@@ -12,7 +12,7 @@ import {
   User, Mail, Ticket, PlusCircle, CheckCircle, XCircle,
   AlertTriangle, DollarSign, Calendar, Loader2, BarChart3, Edit, Trash2,
   ChevronLeft, ChevronRight, Search, Filter, Activity, Clock,
-  ShieldCheck, TrendingUp, Package, Users
+  ShieldCheck, TrendingUp, Package, Users, Edit3, X
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,48 @@ import { toast } from "sonner";
 function VendorDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = authClient.useSession();
+
+  // Clock state
+  const [currentTime, setCurrentTime] = useState(null);
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Profile modal states
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editImage, setEditImage] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    if (session?.user) {
+      setEditName(session.user.name || "");
+      setEditImage(session.user.image || "");
+    }
+  }, [session]);
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setProfileError("");
+    setProfileSaving(true);
+    try {
+      await updateUser({
+        name: editName,
+        image: editImage,
+      });
+      setIsProfileModalOpen(false);
+      toast.success("Profile updated successfully!");
+      window.location.reload();
+    } catch (err) {
+      setProfileError(err.message || "Failed to update profile.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const [tickets, setTickets] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -75,7 +117,6 @@ function VendorDashboardContent() {
   useEffect(() => { setTicketPage(1); }, [ticketSearch, ticketStatusFilter]);
   useEffect(() => { setBookingPage(1); }, [bookingSearch, bookingStatusFilter]);
 
-  const { data: session } = authClient.useSession();
 
   const getToken = async () => {
     try {
@@ -357,9 +398,9 @@ function VendorDashboardContent() {
               <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--primary)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             </div>
-            <div className="relative flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <div className="relative">
+            <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative flex-shrink-0">
                   <img
                     src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
                     alt={session?.user?.name}
@@ -384,14 +425,29 @@ function VendorDashboardContent() {
                 </div>
               </div>
 
-              {isFraud && (
-                <div className="px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-xl animate-pulse">
-                  <div className="flex items-center gap-2 text-red-400 text-xs font-bold uppercase tracking-wider">
-                    <AlertTriangle className="w-4 h-4" />
-                    ACCOUNT SUSPENDED — FRAUD FLAGGED
+              {/* Fraud and Actions */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                {isFraud && (
+                  <div className="px-4 py-2.5 bg-red-500/20 border border-red-500/30 rounded-xl animate-pulse">
+                    <span className="text-red-400 text-[10px] font-bold uppercase tracking-wider">
+                      Fraud Flagged
+                    </span>
                   </div>
-                </div>
-              )}
+                )}
+                {currentTime && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-300 bg-white/10 px-3.5 py-2 rounded-xl backdrop-blur-md border border-white/5">
+                    <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{currentTime.toLocaleTimeString()}</span>
+                  </span>
+                )}
+                <button
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4.5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10 shadow-lg active:scale-95"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit Profile</span>
+                </button>
+              </div>
             </div>
           </section>
 
@@ -825,6 +881,70 @@ function VendorDashboardContent() {
                 <div className="h-full flex items-center justify-center text-xs text-gray-400">No revenue data available yet.</div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Profile Modal */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-extrabold tracking-tight text-foreground">Edit Profile</h2>
+              <button onClick={() => setIsProfileModalOpen(false)} className="p-1 hover:bg-[var(--border)] rounded-lg transition-colors text-foreground/60">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {profileError && (
+              <div className="bg-red-55 dark:bg-red-955/20 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-xs font-semibold border border-red-200/50">
+                {profileError}
+              </div>
+            )}
+
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Display Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Profile Image URL</label>
+                <input
+                  type="url"
+                  value={editImage}
+                  onChange={(e) => setEditImage(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="flex-1 py-3 border border-[var(--border)] text-foreground hover:bg-[var(--input)] font-semibold rounded-xl text-sm transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="flex-1 py-3 bg-[var(--primary)] hover:opacity-95 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md"
+                >
+                  {profileSaving ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

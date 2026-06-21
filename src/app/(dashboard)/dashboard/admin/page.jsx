@@ -2,13 +2,13 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useSession, authClient } from "@/lib/auth-client";
+import { useSession, authClient, updateUser } from "@/lib/auth-client";
 import CountUp from "@/components/CountUp";
 import {
   User, Mail, Shield, ShieldAlert, CheckCircle, XCircle,
   ToggleLeft, ToggleRight, AlertTriangle, ShieldCheck, Ticket, Users, Sparkles,
   TrendingUp, Clock, Eye, Ban, Search, ChevronLeft, ChevronRight,
-  BarChart3, Activity, Globe, Calendar, Filter
+  BarChart3, Activity, Globe, Calendar, Filter, Edit3, X
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog } from "@/components/ui/alert-dialog";
@@ -17,6 +17,48 @@ import { toast } from "sonner";
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+
+  // Clock state
+  const [currentTime, setCurrentTime] = useState(null);
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Profile modal states
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editImage, setEditImage] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    if (session?.user) {
+      setEditName(session.user.name || "");
+      setEditImage(session.user.image || "");
+    }
+  }, [session]);
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setProfileError("");
+    setProfileSaving(true);
+    try {
+      await updateUser({
+        name: editName,
+        image: editImage,
+      });
+      setIsProfileModalOpen(false);
+      toast.success("Profile updated successfully!");
+      window.location.reload();
+    } catch (err) {
+      setProfileError(err.message || "Failed to update profile.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   const [users, setUsers] = useState([]);
   const [tickets, setTickets] = useState([]);
 
@@ -363,29 +405,48 @@ function AdminDashboardContent() {
               <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--primary)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             </div>
-            <div className="relative flex flex-col sm:flex-row items-center gap-6">
-              <div className="relative">
-                <img
-                  src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
-                  alt={session?.user?.name}
-                  className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-xl"
-                />
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg flex items-center justify-center border-2 border-slate-900">
-                  <ShieldCheck className="w-3 h-3 text-white" />
+            <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative">
+                  <img
+                    src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
+                    alt={session?.user?.name}
+                    className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-xl"
+                  />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg flex items-center justify-center border-2 border-slate-900">
+                    <ShieldCheck className="w-3 h-3 text-white" />
+                  </div>
+                </div>
+                <div className="text-center sm:text-left space-y-1">
+                  <h1 className="text-2xl font-black text-white">{session?.user?.name}</h1>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <span className="flex items-center justify-center sm:justify-start gap-1.5 text-sm text-slate-300">
+                      <Mail className="w-3.5 h-3.5" />
+                      {session?.user?.email}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--primary)]/20 text-[var(--primary)] rounded-full text-xs font-bold uppercase tracking-wider">
+                      <Shield className="w-3 h-3" />
+                      System Administrator
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="text-center sm:text-left space-y-1">
-                <h1 className="text-2xl font-black text-white">{session?.user?.name}</h1>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <span className="flex items-center justify-center sm:justify-start gap-1.5 text-sm text-slate-300">
-                    <Mail className="w-3.5 h-3.5" />
-                    {session?.user?.email}
+
+              {/* Time and Action */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                {currentTime && (
+                  <span className="flex items-center gap-1.5 text-xs text-slate-300 bg-white/10 px-3.5 py-2 rounded-xl backdrop-blur-md border border-white/5">
+                    <Clock className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    <span>{currentTime.toLocaleTimeString()}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--primary)]/20 text-[var(--primary)] rounded-full text-xs font-bold uppercase tracking-wider">
-                    <Shield className="w-3 h-3" />
-                    System Administrator
-                  </span>
-                </div>
+                )}
+                <button
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4.5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10 shadow-lg active:scale-95"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit Profile</span>
+                </button>
               </div>
             </div>
           </section>
@@ -895,6 +956,70 @@ function AdminDashboardContent() {
         onConfirm={confirmDialog.onConfirm}
         onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
       />
+      {/* Edit Profile Modal */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-extrabold tracking-tight text-foreground">Edit Profile</h2>
+              <button onClick={() => setIsProfileModalOpen(false)} className="p-1 hover:bg-[var(--border)] rounded-lg transition-colors text-foreground/60">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {profileError && (
+              <div className="bg-red-55 dark:bg-red-955/20 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-xs font-semibold border border-red-200/50">
+                {profileError}
+              </div>
+            )}
+
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Display Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Profile Image URL</label>
+                <input
+                  type="url"
+                  value={editImage}
+                  onChange={(e) => setEditImage(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="flex-1 py-3 border border-[var(--border)] text-foreground hover:bg-[var(--input)] font-semibold rounded-xl text-sm transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="flex-1 py-3 bg-[var(--primary)] hover:opacity-95 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md"
+                >
+                  {profileSaving ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
