@@ -1,37 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# TicketBari Client App
+
+Welcome to **TicketBari** - a premium, state-of-the-art online ticket booking platform built with Next.js (App Router), Tailwind CSS (v4), Better Auth, Stripe, Swiper.js, and Lenis smooth scrolling.
+
+## Key Features
+
+- **Dynamic Hero Background**: Beautiful photo slider using Swiper.js changing automatically.
+- **Unified Design System**: Sleek glassmorphism, responsive navigation bar, customized interactive buttons, card shadow enhancements, and harmonious HSL colors supporting light and dark modes.
+- **Smooth Scroll Integration**: Integrated Lenis smooth scroll for a premium feel.
+- **Search & Filter Flow**: Search by departure/arrival stations, transportation type (Bus, Train, Launch, Plane), and travel date.
+- **Auth Page Redesign**: Grid layout showcasing gorgeous travel imagery side-by-side with modern, secure signup and sign-in credentials forms.
+
+## User Roles & Dashboards
+
+The system supports 3 primary roles synced seamlessly using query parameter states:
+
+### 1. Passenger Dashboard (`/dashboard/user`)
+- View booking statistics (Total booked, Paid tickets, Awaiting, Total spent).
+- Interactive booking status tracker (Paid, Pending, Accepted).
+- One-click payments integrated with Stripe checkout.
+- Skeleton loading status.
+
+### 2. Vendor Dashboard (`/dashboard/vendor`)
+- Real-time revenue charts (using Recharts).
+- Ticket management module (Add/Edit/Delete itineraries, set quantity/price, list features/perks).
+- Accept or reject passenger booking requests.
+- Account status warning (fraud alert).
+
+### 3. Administrator Dashboard (`/dashboard/admin`)
+- Total active itineraries, users, advertisements, and flagged fraud incidents overview.
+- User management panel (change roles to user/vendor/admin, flag/unflag fraud).
+- Ticket verification interface (approve/reject vendor tickets).
+- Advertisement banner manager.
 
 ## Getting Started
 
-First, run the development server:
+1. Set up environment variables in `.env.local`:
+   ```env
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   NEXT_PUBLIC_API_URL=http://localhost:5000
+   NEXT_SERVER_PUBLIC_URL=http://localhost:5000
+   NEXT_PUBLIC_IMGBB_API_KEY=your_imgbb_key
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+   BETTER_AUTH_SECRET=your_better_auth_secret
+   STRIPE_SECRET_KEY=your_stripe_secret_key
+   MONGO_DB_URI=your_mongodb_uri
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Run development mode:
+   ```bash
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+4. Build production static bundle:
+   ```bash
+   npm run build
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploying to Vercel
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Ticket-Bari
+Ensure all environment variables listed above are specified in Vercel's environment configuration before building. The Next.js client is configured out of the box to compile and host on Vercel.
