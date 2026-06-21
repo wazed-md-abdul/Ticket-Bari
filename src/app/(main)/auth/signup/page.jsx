@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signUp } from "@/lib/auth-client";
+import { signOut, signUp, signIn } from "@/lib/auth-client";
 import { UserPlus, User, Mail, Key, Image, AlertCircle, Sparkles, Ticket } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
+
 
 
 export default function SignUpPage() {
@@ -16,9 +18,10 @@ export default function SignUpPage() {
   const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+ const router = useRouter();
   const handleFileChange = (e) => {
     setImageFile(e.target.files[0]);
+   
   };
 
   const handleSubmit = async (e) => {
@@ -29,7 +32,7 @@ export default function SignUpPage() {
     try {
       let imageUrl = "";
 
-      // 1. Upload profile image to ImgBB
+
       if (imageFile) {
         const formData = new FormData();
         formData.append("image", imageFile);
@@ -60,16 +63,32 @@ export default function SignUpPage() {
         name,
         image: imageUrl,
         role: role, // Extends schema
-       
+
+
       });
 
       if (res?.error) {
         setError(res.error.message || "Failed to register account.");
+      } else {
+        await signOut();
+        router.push("/auth/signin");
       }
+
     } catch (err) {
       setError(err.message || "Registration failed. Try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (err) {
+      setError("Google Sign In failed.");
     }
   };
 
@@ -78,13 +97,13 @@ export default function SignUpPage() {
       {/* Left side: Relevant Travel Image */}
       <div className="hidden lg:flex relative bg-slate-900 overflow-hidden items-center justify-center">
         {/* Background Image */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center opacity-70 transition-transform duration-[10s] hover:scale-105"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&q=80&w=1080')" }}
         />
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20" />
-        
+
         {/* Floating Brand Elements */}
         <div className="relative z-10 p-12 max-w-lg text-white space-y-6">
           <Link href="/" className="flex items-center space-x-2 w-fit bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
@@ -206,6 +225,21 @@ export default function SignUpPage() {
               )}
             </button>
           </form>
+
+          <div className="relative flex items-center justify-center">
+            <hr className="w-full border-[var(--border)]" />
+            <span className="absolute bg-[var(--card)] px-4 text-xs font-bold uppercase tracking-wider text-foreground/50">Or Continue With</span>
+          </div>
+
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full py-3 bg-[var(--input)] hover:bg-[var(--card)] text-foreground border border-[var(--border)] rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center space-x-2.5"
+          >
+            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.468 0-6.28-2.812-6.28-6.28s2.812-6.28 6.28-6.28c1.637 0 3.125.626 4.248 1.648l3.123-3.123C19.262 2.693 15.98 1 12.24 1 5.922 1 12s4.922 11 11.24 11c6.518 0 11.24-4.582 11.24-11 0-.74-.067-1.455-.19-2.143H12.24z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
 
           <p className="text-center text-xs text-foreground/60">
             Already have an account?{" "}

@@ -20,8 +20,14 @@ function SidebarContent({ children }) {
 
   useEffect(() => {
     // Theme sync
-    const savedTheme = localStorage.getItem("theme") || "light";
+    const savedTheme = localStorage.getItem("theme") || 
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     setTheme(savedTheme);
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, []);
 
   const toggleTheme = () => {

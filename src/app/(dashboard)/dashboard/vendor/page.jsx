@@ -36,6 +36,7 @@ function VendorDashboardContent() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editImage, setEditImage] = useState("");
+  const [editImageFile, setEditImageFile] = useState(null);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
 
@@ -51,9 +52,31 @@ function VendorDashboardContent() {
     setProfileError("");
     setProfileSaving(true);
     try {
+      let imageUrl = editImage;
+
+      if (editImageFile) {
+        const formData = new FormData();
+        formData.append("image", editImageFile);
+
+        const imgbbKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY || "e137d11ae145b9f6610a6d8377ef5413";
+        const uploadRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `Failed to upload avatar image to ImgBB (status ${uploadRes.status}).`;
+          throw new Error(errMsg);
+        }
+
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.data?.url || "";
+      }
+
       await updateUser({
         name: editName,
-        image: editImage,
+        image: imageUrl,
       });
       setIsProfileModalOpen(false);
       toast.success("Profile updated successfully!");
@@ -914,13 +937,12 @@ function VendorDashboardContent() {
               </div>
               
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Profile Image URL</label>
+                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Profile Image</label>
                 <input
-                  type="url"
-                  value={editImage}
-                  onChange={(e) => setEditImage(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEditImageFile(e.target.files[0])}
+                  className="w-full px-4.5 py-3 rounded-xl bg-[var(--input)] border border-[var(--border)] text-foreground file:mr-4 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary)]/10 file:text-[var(--primary)] hover:file:opacity-80 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] flex items-center"
                 />
               </div>
 

@@ -143,7 +143,7 @@ export default function HomePage() {
     <div className="space-y-24 pb-24 bg-[var(--background)]">
       
       {/* 1. CREATIVE HERO SECTION WITH ACCENT GLOWS & CUSTOM SLIDESHOW */}
-      <section className="relative h-[720px] w-full overflow-hidden flex items-center justify-center">
+      <section className="relative min-h-[720px] lg:h-[720px] w-full overflow-hidden flex items-center justify-center py-12 lg:py-0">
         {/* Background Swiper Slideshow */}
         <div className="absolute inset-0 z-0">
           {(isDarkMode ? darkImages : lightImages).map((src, index) => (
@@ -171,7 +171,7 @@ export default function HomePage() {
         </div>
 
         {/* Content Box */}
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 z-20 space-y-8 max-w-6xl mx-auto">
+        <div className="relative lg:absolute lg:inset-0 flex flex-col justify-center items-center text-center px-4 z-20 space-y-8 max-w-6xl mx-auto py-8 lg:py-0">
           <div className="space-y-4">
             <span className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-[var(--primary)] bg-[var(--primary)]/10 border border-[var(--primary)]/30 rounded-full inline-flex items-center space-x-1.5 backdrop-blur-md animate-bounce">
               <Sparkles className="w-3.5 h-3.5" />
@@ -191,7 +191,7 @@ export default function HomePage() {
             <div className="glass p-6 sm:p-8 rounded-[32px] shadow-2xl border border-white/10 space-y-6">
               
               {/* Creative Mode Tabs for Transport */}
-              <div className="flex space-x-2 border-b border-white/10 pb-4">
+              <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4" style={{ flexWrap: "wrap" }}>
                 {[
                   { value: "", label: "All Vehicles", icon: Ticket },
                   { value: "bus", label: "Bus Coach", icon: Bus },
