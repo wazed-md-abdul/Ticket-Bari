@@ -36,6 +36,12 @@ export async function POST(request) {
         { $set: { status: "paid" } }
       );
 
+      // 2. Deduct seats from ticket inventory (only after confirmed payment)
+      await db.collection("tickets").updateOne(
+        { _id: new ObjectId(ticketId) },
+        { $inc: { ticketQuantity: -qty } }
+      );
+
       // 3. Log transaction details into 'transactions' collection
       await db.collection("transactions").insertOne({
         bookingId,
