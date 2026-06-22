@@ -6,8 +6,71 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { 
   User, Shield, BarChart3, Ticket, LogOut, 
-  Menu, X, Home, Sun, Moon, PlusCircle, Calendar, CreditCard, Users, Sparkles
+  Menu, X, Home, Sun, Moon, PlusCircle, Calendar, CreditCard, Users, Sparkles,
+  ShieldX, Lock, ArrowLeft
 } from "lucide-react";
+
+function UnauthorizedView({ userRole }) {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 text-center max-w-md w-full">
+        {/* Icon */}
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 flex items-center justify-center shadow-2xl shadow-red-500/10">
+              <ShieldX className="w-14 h-14 text-red-500" strokeWidth={1.5} />
+            </div>
+            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Lock className="w-4 h-4 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <p className="text-xs font-black uppercase tracking-[0.4em] text-red-500/70 mb-3">Error 403</p>
+
+        <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4 tracking-tight">
+          Access{" "}
+          <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+            Denied
+          </span>
+        </h1>
+
+        <p className="text-sm text-foreground/50 font-medium mb-2">
+          তুমি এই পেইজ দেখার অনুমতি পাওনি।
+        </p>
+        <p className="text-xs text-foreground/40 mb-10">
+          You don&apos;t have permission to access this page. Your role is{" "}
+          <span className="font-bold text-[var(--primary)]">{userRole}</span>.
+        </p>
+
+        <div className="w-24 h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent mx-auto mb-10" />
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-wider bg-foreground text-background rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-lg"
+          >
+            <Home className="w-4 h-4" />
+            Go Home
+          </Link>
+          <Link
+            href={`/dashboard/${userRole}`}
+            className="flex items-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] rounded-xl hover:opacity-95 active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            My Dashboard
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SidebarContent({ children }) {
   const pathname = usePathname();
@@ -62,6 +125,15 @@ function SidebarContent({ children }) {
   }
 
   const role = session.user.role || "user";
+
+  // pathname থেকে dashboard role বের করো
+  // e.g. /dashboard/vendor → "vendor"
+  const pathnameRole = pathname.split("/")[2]; // dashboard/[role]
+
+  // Role match না হলে Unauthorized দেখাও
+  if (pathnameRole && pathnameRole !== role) {
+    return <UnauthorizedView userRole={role} />;
+  }
   const activeTab = searchParams.get("tab") || "profile";
 
   let menuItems = [];

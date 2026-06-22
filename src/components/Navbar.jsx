@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
-import { Sun, Moon, LogOut, LayoutDashboard, Ticket, LogIn, Menu, X } from "lucide-react";
+import { Sun, Moon, LogOut, LayoutDashboard, Ticket, LogIn, Menu, X, ChevronDown, User } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
   const [theme, setTheme] = useState("light");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Load theme preference on mount
   useEffect(() => {
@@ -117,22 +118,67 @@ export default function Navbar() {
                   <span>Dashboard</span>
                 </Link>
 
-                <div className="flex items-center space-x-2 bg-[var(--input)] border border-[var(--border)] rounded-2xl p-1 pr-2.5">
-                  <img
-                    src={session.user.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
-                    alt={session.user.name}
-                    className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-800"
-                  />
-                  <span className="text-[10px] font-bold text-foreground/80 max-w-[80px] truncate">
-                    {session.user.name.split(" ")[0]}
-                  </span>
+                <div className="relative">
                   <button
-                    onClick={handleLogout}
-                    className="ml-2 p-1 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all"
-                    title="Log Out"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center space-x-2 bg-[var(--input)] hover:bg-[var(--input)]/80 border border-[var(--border)] rounded-2xl p-1 pr-2.5 transition-all select-none"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <img
+                      src={session.user.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
+                      alt={session.user.name}
+                      className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-800"
+                    />
+                    <span className="text-[10px] font-bold text-foreground/80 max-w-[80px] truncate">
+                      {session.user.name.split(" ")[0]}
+                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
                   </button>
+
+                  {dropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setDropdownOpen(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-48 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div className="px-4 py-2 border-b border-[var(--border)] mb-1">
+                          <p className="text-xs font-bold text-foreground truncate">{session.user.name}</p>
+                          <p className="text-[9px] font-bold text-foreground/50 uppercase tracking-wider truncate">{session.user.role}</p>
+                        </div>
+                        
+                        <Link
+                          href={`${getDashboardLink()}?tab=profile`}
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center space-x-2 px-4 py-2 text-xs font-bold text-foreground/80 hover:text-[var(--primary)] hover:bg-[var(--input)] transition-colors"
+                        >
+                          <User className="w-3.5 h-3.5" />
+                          <span>My Profile</span>
+                        </Link>
+                        
+                        <Link
+                          href={getDashboardLink()}
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center space-x-2 px-4 py-2 text-xs font-bold text-foreground/80 hover:text-[var(--primary)] hover:bg-[var(--input)] transition-colors"
+                        >
+                          <LayoutDashboard className="w-3.5 h-3.5" />
+                          <span>Dashboard</span>
+                        </Link>
+                        
+                        <hr className="border-[var(--border)] my-1" />
+                        
+                        <button
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-colors text-left"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Log Out</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
@@ -212,13 +258,22 @@ export default function Navbar() {
                   <span className="block text-[10px] text-foreground/60 uppercase tracking-wider">{session.user.role}</span>
                 </div>
               </div>
-              <Link
-                href={getDashboardLink()}
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center block py-3 text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] rounded-xl"
-              >
-                Go to Dashboard
-              </Link>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href={`${getDashboardLink()}?tab=profile`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center block py-3 text-xs font-black uppercase tracking-wider text-foreground bg-[var(--input)] border border-[var(--border)] rounded-xl"
+                >
+                  My Profile
+                </Link>
+                <Link
+                  href={getDashboardLink()}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center block py-3 text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] rounded-xl"
+                >
+                  Dashboard
+                </Link>
+              </div>
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
