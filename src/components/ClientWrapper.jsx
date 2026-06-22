@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Lenis from "lenis";
-import { Ticket } from "lucide-react";
 import { Toaster } from "sonner";
+import Logo from "./Logo";
 
 export default function ClientWrapper({ children }) {
   const [loading, setLoading] = useState(true);
@@ -84,15 +84,10 @@ export default function ClientWrapper({ children }) {
           <div className="relative flex flex-col items-center space-y-6">
             {/* Spinning/pulsing ticket icon */}
             <div className="relative flex items-center justify-center p-6 rounded-3xl bg-[var(--card)] border border-[var(--border)] shadow-xl shadow-emerald-500/5 animate-[float_3s_ease-in-out_infinite]">
-              <Ticket className="w-12 h-12 text-[var(--primary)] animate-pulse" />
+              <Logo variant="icon" size="lg" />
               {/* Spinning loading rings */}
               <div className="absolute inset-0 border-2 border-[var(--primary)] border-t-transparent rounded-3xl animate-spin"></div>
             </div>
-
-            {/* Glowing Brand text */}
-            <h1 className="text-3xl font-extrabold tracking-wider bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">
-              TICKETBARI
-            </h1>
 
             {/* Micro loading progress bar */}
             <div className="w-48 h-1 bg-[var(--border)] rounded-full overflow-hidden">

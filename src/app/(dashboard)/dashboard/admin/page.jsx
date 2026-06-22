@@ -354,7 +354,10 @@ function AdminDashboardContent() {
   const currentUsers = filteredUsers.slice((userPage - 1) * itemsPerPage, userPage * itemsPerPage);
 
   // ---- Advertise tab: only approved tickets ----
-  const approvedTickets = tickets.filter(t => t.status === "approved");
+  const approvedTickets = tickets.filter(t => 
+    t.status === "approved" &&
+    new Date(t.departureDateTime) > new Date()
+  );
   const [adPage, setAdPage] = useState(1);
   const adPerPage = 6;
   const totalAdPages = Math.ceil(approvedTickets.length / adPerPage);

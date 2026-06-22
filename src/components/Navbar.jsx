@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { Sun, Moon, LogOut, LayoutDashboard, Ticket, LogIn, Menu, X, ChevronDown, User } from "lucide-react";
 
+import Logo from "./Logo";
+
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
@@ -55,13 +57,8 @@ export default function Navbar() {
           
           {/* Logo Section */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <div className="p-2 bg-gradient-to-tr from-[var(--primary)] to-[var(--secondary)] rounded-xl shadow-md shadow-emerald-500/10 transition-transform duration-300 group-hover:scale-110">
-                <Ticket className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-black tracking-widest text-foreground font-sans select-none">
-                TICKET<span className="bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">BARI</span>
-              </span>
+            <Link href="/" className="group">
+              <Logo variant="horizontal" size="md" />
             </Link>
           </div>
 

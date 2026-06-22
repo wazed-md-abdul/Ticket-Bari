@@ -9,6 +9,7 @@ import {
   Menu, X, Home, Sun, Moon, PlusCircle, Calendar, CreditCard, Users, Sparkles,
   ShieldX, Lock, ArrowLeft
 } from "lucide-react";
+import Logo from "../../../components/Logo";
 
 function UnauthorizedView({ userRole }) {
   return (
@@ -249,15 +250,15 @@ function SidebarContent({ children }) {
           <div className="space-y-6">
             
             {/* Rebrand logo */}
-            <div className="px-3">
+            <div className="px-3 flex items-center justify-between">
               <Link 
                 href="/" 
                 onClick={() => setSidebarOpen(false)}
-                className="text-xl font-black bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent"
+                className="group"
               >
-                TICKETBARI
+                <Logo variant="icon" size="md" />
               </Link>
-              <span className="block text-[10px] text-indigo-500 uppercase tracking-widest font-bold mt-1">
+              <span className="text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] px-2.5 py-0.5 rounded-full uppercase tracking-widest font-bold">
                 {role} Panel
               </span>
             </div>

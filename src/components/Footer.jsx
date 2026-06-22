@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
+import Logo from "./Logo";
 
 export default function Footer() {
   return (
@@ -12,9 +13,7 @@ export default function Footer() {
           
           {/* Column 1: Brand & Desc */}
           <div className="space-y-4">
-            <span className="text-xl font-black tracking-widest text-white select-none">
-              TICKET<span className="bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">BARI</span>
-            </span>
+            <Logo variant="horizontal" size="md" light={true} />
             <p className="text-xs text-slate-400 leading-relaxed font-medium max-w-xs">
               Book bus, train, launch & flight tickets easily. Seamless, instant reservations and zero hidden markup fees.
             </p>

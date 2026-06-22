@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 
 
 
+import Logo from "../../../../components/Logo";
+
 export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -105,12 +107,9 @@ export default function SignUpPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20" />
 
         {/* Floating Brand Elements */}
-        <div className="relative z-10 p-12 max-w-lg text-white space-y-6">
-          <Link href="/" className="flex items-center space-x-2 w-fit bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
-            <Ticket className="w-5 h-5 text-[var(--primary)]" />
-            <span className="font-sans font-black tracking-widest text-white text-sm">
-              TICKET<span className="text-[var(--primary)]">BARI</span>
-            </span>
+        <div className="relative z-10 p-12 max-w-lg text-white space-y-8 flex flex-col items-center text-center">
+          <Link href="/" className="group bg-white/5 backdrop-blur-md p-8 rounded-[32px] border border-white/10 shadow-2xl block w-fit">
+            <Logo variant="full" size="lg" light={true} />
           </Link>
           <div className="space-y-3">
             <h2 className="text-3xl font-black leading-tight">Create Your Passenger Pass</h2>
