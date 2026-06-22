@@ -45,20 +45,50 @@ function BookingCountdown({ departureDateTime, status }) {
   }, [departureDateTime, status]);
 
   if (status === "rejected") return null;
+
   if (!timeLeft) {
-    return <span className="text-[10px] font-bold text-red-500 uppercase">Boarding Passed</span>;
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-800/30 rounded-xl">
+        <Clock className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+        <span className="text-[10px] font-black text-red-500 uppercase tracking-wider">Boarding Passed</span>
+      </div>
+    );
   }
 
+  const units = [
+    { label: "D", value: timeLeft.days },
+    { label: "H", value: timeLeft.hours },
+    { label: "M", value: timeLeft.minutes },
+    { label: "S", value: timeLeft.seconds },
+  ];
+
   return (
-    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--primary)] mt-1">
-      <Clock className="w-3.5 h-3.5 animate-pulse" />
-      <span>Boarding in:</span>
-      <span className="font-black bg-[var(--primary)]/10 px-1.5 py-0.5 rounded">
-        {timeLeft.days > 0 ? `${timeLeft.days}d ` : ""}{timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
-      </span>
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+        <Clock className="w-3 h-3 animate-pulse text-[var(--primary)]" />
+        Departs in
+      </div>
+      <div className="flex items-center gap-1.5">
+        {units.map(({ label, value }, i) => (
+          <div key={label} className="flex items-center gap-1">
+            <div className="flex flex-col items-center min-w-[36px] bg-[var(--primary)]/8 dark:bg-[var(--primary)]/10 border border-[var(--primary)]/15 rounded-lg px-2 py-1">
+              <span className="text-sm font-black text-[var(--primary)] leading-none tabular-nums">
+                {String(value).padStart(2, "0")}
+              </span>
+              <span className="text-[8px] font-bold text-[var(--primary)]/60 uppercase tracking-wider mt-0.5">
+                {label}
+              </span>
+            </div>
+            {i < units.length - 1 && (
+              <span className="text-[var(--primary)]/40 font-black text-xs mb-2">:</span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
+
 
 function UserDashboardContent() {
   const { data: session } = useSession();
@@ -518,65 +548,124 @@ function UserDashboardContent() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentBookings.map((booking) => (
-                  <div
-                    key={booking._id}
-                    className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
-                      booking.status === "paid"
-                        ? "border-emerald-500/30 ring-1 ring-emerald-500/10"
-                        : "border-[var(--border)]"
-                    }`}
-                  >
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-start">
-                        <span className="px-2 py-1 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg text-[10px] font-bold uppercase tracking-wider">
-                          {booking.transportType}
-                        </span>
-                        {getStatusBadge(booking.status)}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{booking.ticketTitle}</h3>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <Calendar className="w-3.5 h-3.5 text-[var(--primary)]" />
-                          <span>{new Date(booking.departureDateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {currentBookings.map((booking) => {
+                  const isExpired = new Date(booking.departureDateTime) < new Date();
+                  return (
+                    <div
+                      key={booking._id}
+                      className={`bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden shadow-sm flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
+                        booking.status === "paid"
+                          ? "border-emerald-500/30 ring-1 ring-emerald-500/10"
+                          : booking.status === "accepted"
+                          ? "border-indigo-500/30 ring-1 ring-indigo-500/10"
+                          : booking.status === "rejected"
+                          ? "border-red-500/20"
+                          : "border-[var(--border)]"
+                      }`}
+                    >
+                      {/* Ticket Image */}
+                      {booking.image ? (
+                        <div className="relative h-36 overflow-hidden">
+                          <img
+                            src={booking.image}
+                            alt={booking.ticketTitle}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                          {/* Status badge over image */}
+                          <div className="absolute top-3 right-3">
+                            {getStatusBadge(booking.status)}
+                          </div>
+                          {/* Transport type */}
+                          <span className="absolute bottom-3 left-3 px-2 py-1 bg-black/50 backdrop-blur-sm text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                            {booking.transportType}
+                          </span>
                         </div>
-                        <BookingCountdown departureDateTime={booking.departureDateTime} status={booking.status} />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-slate-800/50 mt-4">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-400">Qty: <strong>{booking.bookedQuantity} seats</strong></span>
-                        <span className="font-black text-slate-800 dark:text-slate-100 text-sm">${booking.totalPrice}</span>
-                      </div>
-
-                      {booking.status === "accepted" && (
-                        (() => {
-                          const isExpired = new Date(booking.departureDateTime) < new Date();
-                          return isExpired ? (
-                            <span className="w-full text-center py-2.5 bg-gray-100 dark:bg-slate-800 text-gray-400 font-bold text-xs rounded-xl block">
-                              Locked (Departure Passed)
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handlePayNow(booking._id)}
-                              disabled={paymentLoading === booking._id}
-                              className="w-full py-2.5 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[var(--primary)]/25 transition-all disabled:opacity-50"
-                            >
-                              {paymentLoading === booking._id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <><CreditCard className="w-3.5 h-3.5" /> Pay Now</>
-                              )}
-                            </button>
-                          );
-                        })()
+                      ) : (
+                        <div className="relative h-24 bg-gradient-to-br from-[var(--primary)]/10 to-[var(--secondary)]/10 flex items-center justify-center border-b border-[var(--border)]">
+                          <Ticket className="w-8 h-8 text-[var(--primary)]/40" />
+                          <div className="absolute top-3 right-3">
+                            {getStatusBadge(booking.status)}
+                          </div>
+                          <span className="absolute bottom-3 left-3 px-2 py-1 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                            {booking.transportType}
+                          </span>
+                        </div>
                       )}
+
+                      <div className="p-4 flex flex-col flex-1 space-y-3">
+                        {/* Title */}
+                        <div>
+                          <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-tight line-clamp-2">
+                            {booking.ticketTitle}
+                          </h3>
+                        </div>
+
+                        {/* Route: From → To */}
+                        {(booking.from || booking.to) && (
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/50 px-3 py-2 rounded-xl">
+                            <span className="truncate max-w-[80px]">{booking.from || "—"}</span>
+                            <span className="text-[var(--primary)] flex-shrink-0">→</span>
+                            <span className="truncate max-w-[80px]">{booking.to || "—"}</span>
+                          </div>
+                        )}
+
+                        {/* Departure */}
+                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                          <Calendar className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" />
+                          <span>{new Date(booking.departureDateTime).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</span>
+                        </div>
+
+                        {/* Countdown */}
+                        <BookingCountdown departureDateTime={booking.departureDateTime} status={booking.status} />
+
+                        {/* Pricing + Qty */}
+                        <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-slate-800/50">
+                          <div className="text-[10px] text-gray-400 space-y-0.5">
+                            <div>
+                              <span className="font-bold text-slate-600 dark:text-slate-400">{booking.bookedQuantity}</span>
+                              <span> seat{booking.bookedQuantity > 1 ? "s" : ""}</span>
+                            </div>
+                            {booking.unitPrice && (
+                              <div>${booking.unitPrice} × {booking.bookedQuantity}</div>
+                            )}
+                          </div>
+                          <span className="font-black text-slate-800 dark:text-slate-100 text-base">
+                            ${booking.totalPrice}
+                          </span>
+                        </div>
+
+                        {/* Pay Now / Expired / Status msg */}
+                        {booking.status === "accepted" && (
+                          <div className="mt-auto pt-1">
+                            {isExpired ? (
+                              <div className="w-full py-2.5 bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-wider rounded-xl flex items-center justify-center gap-2">
+                                <Clock className="w-3.5 h-3.5" />
+                                Departure Passed — Payment Locked
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handlePayNow(booking._id)}
+                                disabled={paymentLoading === booking._id}
+                                className="w-full py-2.5 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-90 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[var(--primary)]/25 transition-all active:scale-[0.98] disabled:opacity-60"
+                              >
+                                {paymentLoading === booking._id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <CreditCard className="w-3.5 h-3.5" />
+                                    Pay Now — ${booking.totalPrice}
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <Pagination page={bookingPage} totalPages={totalBookingPages} setPage={setBookingPage} />
             </>

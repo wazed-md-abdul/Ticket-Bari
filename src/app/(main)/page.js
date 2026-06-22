@@ -8,11 +8,18 @@ import {
   Search, ShieldCheck, Ticket, Users, Clock, Headset, 
   MapPin, Calendar, Plane, Bus, Train, ArrowRight, Star, 
   Award, ShieldAlert, Sparkles, BookOpen, Navigation, CheckCircle2,
-  TrendingUp, Award as BadgeIcon
+  TrendingUp, Award as BadgeIcon, Copy, Gift, Check
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination, Navigation as SwiperNavigation } from "swiper/modules";
+
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
 
 const lightImages = [
   "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920", // Luxury Bus Coach
@@ -25,6 +32,110 @@ const darkImages = [
   "https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&q=80&w=1920", // Night Train / Rail
   "https://images.unsplash.com/photo-1483450388369-9ed95738483c?auto=format&fit=crop&q=80&w=1920"  // Night Flight / Cabin View
 ];
+
+const operators = [
+  { name: "Green Line Paribahan", type: "Bus Coach", icon: <Bus className="w-4 h-4 text-emerald-500" /> },
+  { name: "Hanif Enterprise", type: "Bus Coach", icon: <Bus className="w-4 h-4 text-emerald-500" /> },
+  { name: "Shohagh Paribahan", type: "Bus Coach", icon: <Bus className="w-4 h-4 text-emerald-500" /> },
+  { name: "US-Bangla Airlines", type: "Flight Route", icon: <Plane className="w-4 h-4 text-sky-500" /> },
+  { name: "Biman Bangladesh", type: "Flight Route", icon: <Plane className="w-4 h-4 text-sky-500" /> },
+  { name: "Novoair", type: "Flight Route", icon: <Plane className="w-4 h-4 text-sky-500" /> },
+  { name: "Subarna Express", type: "Rail Coach", icon: <Train className="w-4 h-4 text-amber-500" /> },
+  { name: "Sonar Bangla Express", type: "Rail Coach", icon: <Train className="w-4 h-4 text-amber-500" /> },
+  { name: "Parabat Express", type: "Rail Coach", icon: <Train className="w-4 h-4 text-amber-500" /> },
+  { name: "Ena Transport", type: "Bus Coach", icon: <Bus className="w-4 h-4 text-emerald-500" /> },
+  { name: "Shyamoli Paribahan", type: "Bus Coach", icon: <Bus className="w-4 h-4 text-emerald-500" /> },
+  { name: "Saintmartin Service", type: "Launch Cruise", icon: <Navigation className="w-4 h-4 text-indigo-500 rotate-45" /> }
+];
+
+const promoOffers = [
+  {
+    code: "EID2026",
+    discount: "15% OFF",
+    title: "Eid Special Deal",
+    description: "Get 15% discount on all bus & train routes nationwide. Travel home with ease.",
+    expiry: "10 days"
+  },
+  {
+    code: "FLYHIGH",
+    discount: "$50 OFF",
+    title: "Flight Getaways",
+    description: "Flat $50 off on international/regional flight bookings. Limited time only.",
+    expiry: "15 days"
+  },
+  {
+    code: "FIRSTTIME",
+    discount: "10% OFF",
+    title: "New User Welcome",
+    description: "Save 10% on your very first ticket booking across any travel operators.",
+    expiry: "30 days"
+  },
+  {
+    code: "MONSOON20",
+    discount: "20% OFF",
+    title: "Monsoon Escape Deals",
+    description: "20% off on premium routes to Cox's Bazar and Sylhet. Enjoy the rains.",
+    expiry: "7 days"
+  },
+  {
+    code: "WEEKENDGET",
+    discount: "Flat $10",
+    title: "Weekend Getaway Voucher",
+    description: "Save $10 flat on round-trip bus or train tickets. Weekend escapes made cheaper.",
+    expiry: "5 days"
+  }
+];
+
+function PromoCard({ code, discount, title, description, expiry }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 flex flex-col justify-between h-56 transition-all hover:shadow-xl hover:border-[var(--primary)]/30 group overflow-hidden">
+      {/* Notch circles on sides for voucher look */}
+      <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--background)] border-r border-[var(--border)] z-10"></div>
+      <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--background)] border-l border-[var(--border)] z-10"></div>
+      
+      <div>
+        <div className="flex justify-between items-start">
+          <span className="text-xl font-black text-[var(--primary)] bg-[var(--primary)]/10 px-3 py-1 rounded-xl">
+            {discount}
+          </span>
+          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+            Expires in {expiry}
+          </span>
+        </div>
+        <h3 className="text-sm font-black mt-4 text-foreground truncate">{title}</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 line-clamp-2 leading-relaxed">
+          {description}
+        </p>
+      </div>
+
+      <div className="pt-4 border-t border-dashed border-[var(--border)] flex justify-between items-center mt-4">
+        <div>
+          <span className="text-[9px] font-bold text-gray-400 uppercase block">Code</span>
+          <span className="text-xs font-black tracking-wider text-foreground select-all">{code}</span>
+        </div>
+        <button
+          onClick={handleCopy}
+          className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer ${
+            copied
+              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+              : "bg-slate-100 dark:bg-slate-900 text-foreground/80 hover:bg-[var(--primary)] hover:text-white"
+          }`}
+        >
+          {copied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          <span>{copied ? "Copied" : "Copy"}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -339,6 +450,59 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 2B. PARTNER OPERATORS MARQUEE */}
+      <section className="w-full overflow-hidden space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start space-x-2 text-[var(--primary)]">
+            <Users className="w-4 h-4" />
+            <span className="text-xs font-black uppercase tracking-widest">Network Operators</span>
+          </div>
+          <h2 className="text-2xl font-black text-foreground mt-2">Trusted Operator Partners</h2>
+        </div>
+
+        <div className="relative w-full overflow-hidden py-4 bg-slate-900/5 dark:bg-slate-900/10 border-y border-slate-200/40 dark:border-slate-800/40">
+          {/* Fade gradient overlays */}
+          <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-[var(--background)] to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-[var(--background)] to-transparent z-10 pointer-events-none"></div>
+          
+          {/* Marquee Row 1 */}
+          <div className="animate-marquee space-x-6">
+            {[...operators, ...operators].map((op, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center space-x-3 bg-[var(--card)]/30 hover:bg-[var(--card)] border border-[var(--border)] px-5 py-2.5 rounded-2xl shadow-sm hover:border-[var(--primary)] transition-all duration-350 cursor-pointer min-w-[220px] shrink-0"
+              >
+                <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-xs">
+                  {op.icon}
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-foreground tracking-wide">{op.name}</h4>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">{op.type}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Marquee Row 2 (Reverse) */}
+          <div className="animate-marquee-reverse space-x-6 mt-4">
+            {[...[...operators].reverse(), ...[...operators].reverse()].map((op, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center space-x-3 bg-[var(--card)]/30 hover:bg-[var(--card)] border border-[var(--border)] px-5 py-2.5 rounded-2xl shadow-sm hover:border-[var(--primary)] transition-all duration-350 cursor-pointer min-w-[220px] shrink-0"
+              >
+                <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-xs">
+                  {op.icon}
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-foreground tracking-wide">{op.name}</h4>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">{op.type}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 3. PREMIUM FEATURED / SPONSORED SPECIALS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex justify-between items-end">
@@ -550,6 +714,46 @@ export default function HomePage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* 5B. EXCLUSIVE PROMOS & VOUCHERS (SWIPER CAROUSEL) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="text-center max-w-3xl mx-auto space-y-2">
+          <div className="flex items-center justify-center space-x-2 text-[var(--primary)]">
+            <Gift className="w-4 h-4" />
+            <span className="text-xs font-black uppercase tracking-widest">Hot Discounts</span>
+          </div>
+          <h2 className="text-3xl font-black text-foreground">Exclusive Promo Vouchers</h2>
+          <p className="text-xs text-gray-500 leading-relaxed font-medium">Use these promo codes during booking checkout to redeem flat discounts.</p>
+        </div>
+
+        <div className="relative px-4 sm:px-8">
+          <Swiper
+            modules={[Autoplay, Pagination, SwiperNavigation]}
+            spaceBetween={24}
+            slidesPerView={1}
+            autoplay={{ delay: 5500, disableOnInteraction: false }}
+            pagination={{ clickable: true }}
+            navigation={true}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 }
+            }}
+            className="w-full"
+          >
+            {promoOffers.map((promo) => (
+              <SwiperSlide key={promo.code} className="py-2">
+                <PromoCard 
+                  code={promo.code}
+                  discount={promo.discount}
+                  title={promo.title}
+                  description={promo.description}
+                  expiry={promo.expiry}
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       </section>
 
       {/* 6. GLOWING ISOMETRIC WHY CHOOSE US GRID */}

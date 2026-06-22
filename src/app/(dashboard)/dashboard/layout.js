@@ -233,6 +233,14 @@ function SidebarContent({ children }) {
         </button>
       </div>
 
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)} 
+          className="lg:hidden fixed inset-0 z-30 bg-black/40 backdrop-blur-sm transition-opacity"
+        />
+      )}
+
       {/* Sidebar Nav */}
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-900 border-r border-gray-150 dark:border-slate-800 transition-transform duration-300 lg:translate-x-0 ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -242,7 +250,11 @@ function SidebarContent({ children }) {
             
             {/* Rebrand logo */}
             <div className="px-3">
-              <Link href="/" className="text-xl font-black bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">
+              <Link 
+                href="/" 
+                onClick={() => setSidebarOpen(false)}
+                className="text-xl font-black bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent"
+              >
                 TICKETBARI
               </Link>
               <span className="block text-[10px] text-indigo-500 uppercase tracking-widest font-bold mt-1">
@@ -254,6 +266,7 @@ function SidebarContent({ children }) {
             <nav className="space-y-1">
               <Link
                 href="/"
+                onClick={() => setSidebarOpen(false)}
                 className="flex items-center space-x-3 px-3 py-2 text-xs font-semibold text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all-300"
               >
                 <Home className="w-4 h-4" />
@@ -263,6 +276,7 @@ function SidebarContent({ children }) {
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={() => setSidebarOpen(false)}
                   className={`flex items-center space-x-3 px-3 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all-300 ${
                     activeTab === item.tab
                       ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400"

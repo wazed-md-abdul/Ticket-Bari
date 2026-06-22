@@ -318,7 +318,13 @@ function AdminDashboardContent() {
   const approvedCount = tickets.filter(t => t.status === "approved").length;
   const pendingCount = tickets.filter(t => t.status === "pending").length;
   const rejectedCount = tickets.filter(t => t.status === "rejected").length;
-  const activeAdsCount = tickets.filter(t => t.isAdvertised && t.status === "approved").length;
+  // Matches the same filters as /api/advertisements (homepage)
+  const activeAdsCount = tickets.filter(t =>
+    t.isAdvertised &&
+    t.status === "approved" &&
+    t.ticketQuantity > 0 &&
+    new Date(t.departureDateTime) > new Date()
+  ).length;
   const totalUsersCount = users.length;
   const vendorCount = users.filter(u => u.role === "vendor").length;
   const adminCount = users.filter(u => u.role === "admin").length;
@@ -947,10 +953,13 @@ function AdminDashboardContent() {
                       {/* Ad Toggle Button */}
                       <button
                         onClick={() => handleAdToggle(t._id, t.isAdvertised)}
-                        disabled={actionLoading === t._id + "_ad"}
-                        className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${
+                        disabled={actionLoading === t._id + "_ad" || (!t.isAdvertised && activeAdsCount >= 6)}
+                        title={!t.isAdvertised && activeAdsCount >= 6 ? "Ad limit reached (6 max)" : ""}
+                        className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                           t.isAdvertised
                             ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                            : activeAdsCount >= 6
+                            ? "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed"
                             : "bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400"
                         }`}
                       >

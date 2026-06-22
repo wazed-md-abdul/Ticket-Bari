@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 
 export default function ClientWrapper({ children }) {
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState("light");
 
   // Initialize Lenis smooth scroll
   useEffect(() => {
@@ -35,9 +36,43 @@ export default function ClientWrapper({ children }) {
     };
   }, []);
 
+  // Sync theme with localStorage + html class (for Toaster)
+  useEffect(() => {
+    const syncTheme = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      setTheme(isDark ? "dark" : "light");
+    };
+
+    // Initial sync
+    syncTheme();
+
+    // Watch for class changes on <html>
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
-      <Toaster richColors closeButton position="top-right" theme="auto" />
+      <Toaster
+        richColors
+        closeButton
+        position="top-right"
+        theme={theme}
+        toastOptions={{
+          style: {
+            fontFamily: "inherit",
+          },
+          classNames: {
+            toast: "font-sans text-sm",
+            title: "font-bold",
+          },
+        }}
+      />
       {loading && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[var(--background)] text-[var(--foreground)] transition-opacity duration-500">
           {/* Wave/Glow circles background */}
