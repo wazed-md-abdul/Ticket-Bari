@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { jwt } from "better-auth/plugins";
+import { jwt, admin } from "better-auth/plugins";
 import clientPromise from "./db";
 
 const client = await clientPromise;
@@ -54,6 +54,7 @@ export const auth = betterAuth({
         },
       },
     }),
+    admin(),
   ],
   user: {
     additionalFields: {

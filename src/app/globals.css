@@ -317,3 +317,52 @@ input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator,
 input[type="time"]:hover::-webkit-calendar-picker-indicator {
   opacity: 1;
 }
+
+/* NexusX Cyber-Dark Theme Utilities */
+.nexus-bg {
+  background-color: #070c12;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.06) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(139, 92, 246, 0.06) 0px, transparent 50%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+}
+
+.nexus-card {
+  background: rgba(13, 22, 32, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 242, 254, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.nexus-card:hover {
+  border-color: rgba(0, 242, 254, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 242, 254, 0.08);
+}
+
+.nexus-glow-cyan {
+  box-shadow: 0 0 25px rgba(0, 242, 254, 0.25);
+}
+
+.nexus-pill-btn {
+  background: linear-gradient(135deg, #00f2fe 0%, #00c6ff 100%);
+  color: #050b10;
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+  transition: all 0.2s ease;
+}
+
+.nexus-pill-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 242, 254, 0.45);
+}
+
+.nexus-active-tab {
+  background: linear-gradient(90deg, rgba(0, 242, 254, 0.15) 0%, rgba(0, 242, 254, 0.02) 100%);
+  border-left: 3px solid #00f2fe;
+  color: #00f2fe;
+}
+

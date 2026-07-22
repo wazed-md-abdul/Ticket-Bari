@@ -8,7 +8,7 @@ import {
   User, Mail, Shield, ShieldAlert, CheckCircle, XCircle,
   ToggleLeft, ToggleRight, AlertTriangle, ShieldCheck, Ticket, Users, Sparkles,
   TrendingUp, Clock, Eye, Ban, Search, ChevronLeft, ChevronRight,
-  BarChart3, Activity, Globe, Calendar, Filter, Edit3, X
+  BarChart3, Activity, Globe, Calendar, Filter, Edit3, X, LogIn, UserCheck, ArrowUpRight
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog } from "@/components/ui/alert-dialog";
@@ -102,7 +102,7 @@ function AdminDashboardContent() {
     isOpen: false,
     title: "",
     description: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
     variant: "default"
   });
 
@@ -294,21 +294,59 @@ function AdminDashboardContent() {
     });
   };
 
+  const executeImpersonate = async (targetUserId, targetUserName) => {
+    setError("");
+    setSuccess("");
+    setActionLoading(targetUserId + "_impersonate");
+    try {
+      const res = await authClient.admin.impersonateUser({
+        userId: targetUserId,
+      });
+      if (res?.error) {
+        throw new Error(res.error.message || "Failed to log in as user.");
+      }
+      toast.success(`Logged in as ${targetUserName}! Redirecting...`);
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+    } catch (err) {
+      const errMsg = err.message || "Failed to log in as user.";
+      setError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setActionLoading("");
+    }
+  };
+
+  const handleImpersonate = (targetUserId, targetUserName, targetUserEmail) => {
+    triggerConfirm({
+      title: "Log In As User?",
+      description: `You will temporarily log in as "${targetUserName}" (${targetUserEmail}). You can stop impersonating and return to your Admin account anytime using the top banner.`,
+      variant: "default",
+      onConfirm: () => executeImpersonate(targetUserId, targetUserName),
+    });
+  };
+
   // ---- Status badge helper ----
   const getStatusBadge = (status) => {
-    const styles = {
-      approved: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-      rejected: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-      pending: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    };
-    const labels = { approved: "Approved", rejected: "Rejected", pending: "Pending" };
     const s = status || "pending";
+    if (s === "approved") {
+      return (
+        <span className="inline-flex items-center px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/10">
+          <CheckCircle className="w-3 h-3 mr-1 text-emerald-400" /> Approved
+        </span>
+      );
+    }
+    if (s === "rejected") {
+      return (
+        <span className="inline-flex items-center px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30">
+          <XCircle className="w-3 h-3 mr-1 text-rose-400" /> Rejected
+        </span>
+      );
+    }
     return (
-      <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${styles[s] || styles.pending}`}>
-        {s === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
-        {s === "rejected" && <XCircle className="w-3 h-3 mr-1" />}
-        {s === "pending" && <Clock className="w-3 h-3 mr-1" />}
-        {labels[s] || "Pending"}
+      <span className="inline-flex items-center px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+        <Clock className="w-3 h-3 mr-1 text-amber-400" /> Pending
       </span>
     );
   };
@@ -318,7 +356,6 @@ function AdminDashboardContent() {
   const approvedCount = tickets.filter(t => t.status === "approved").length;
   const pendingCount = tickets.filter(t => t.status === "pending").length;
   const rejectedCount = tickets.filter(t => t.status === "rejected").length;
-  // Matches the same filters as /api/advertisements (homepage)
   const activeAdsCount = tickets.filter(t =>
     t.isAdvertised &&
     t.status === "approved" &&
@@ -332,7 +369,7 @@ function AdminDashboardContent() {
 
   // ---- Filtered / paginated tickets ----
   const filteredTickets = tickets.filter(t => {
-    const matchesSearch = !ticketSearch || 
+    const matchesSearch = !ticketSearch ||
       t.title?.toLowerCase().includes(ticketSearch.toLowerCase()) ||
       t.from?.toLowerCase().includes(ticketSearch.toLowerCase()) ||
       t.to?.toLowerCase().includes(ticketSearch.toLowerCase());
@@ -354,7 +391,7 @@ function AdminDashboardContent() {
   const currentUsers = filteredUsers.slice((userPage - 1) * itemsPerPage, userPage * itemsPerPage);
 
   // ---- Advertise tab: only approved tickets ----
-  const approvedTickets = tickets.filter(t => 
+  const approvedTickets = tickets.filter(t =>
     t.status === "approved" &&
     new Date(t.departureDateTime) > new Date()
   );
@@ -371,7 +408,7 @@ function AdminDashboardContent() {
         <button
           onClick={() => setPage(p => Math.max(p - 1, 1))}
           disabled={page === 1}
-          className="p-2 rounded-xl border border-[var(--border)] bg-white dark:bg-slate-900 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+          className="p-2.5 rounded-2xl border border-slate-800 bg-[#0d1620] text-slate-400 hover:text-white disabled:opacity-30 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -379,10 +416,10 @@ function AdminDashboardContent() {
           <button
             key={p}
             onClick={() => setPage(p)}
-            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
+            className={`w-9 h-9 rounded-2xl text-xs font-black transition-all ${
               p === page
-                ? "bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/25"
-                : "border border-[var(--border)] bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-500"
+                ? "bg-cyan-500 text-slate-950 font-black shadow-lg shadow-cyan-500/30"
+                : "border border-slate-800 bg-[#0d1620] hover:bg-slate-800 text-slate-400"
             }`}
           >
             {p}
@@ -391,7 +428,7 @@ function AdminDashboardContent() {
         <button
           onClick={() => setPage(p => Math.min(p + 1, totalPages))}
           disabled={page === totalPages}
-          className="p-2 rounded-xl border border-[var(--border)] bg-white dark:bg-slate-900 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+          className="p-2.5 rounded-2xl border border-slate-800 bg-[#0d1620] text-slate-400 hover:text-white disabled:opacity-30 transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -403,7 +440,7 @@ function AdminDashboardContent() {
   const SkeletonRows = ({ count = 4 }) => (
     <div className="space-y-3">
       {[...Array(count)].map((_, i) => (
-        <div key={i} className="h-16 bg-gray-100 dark:bg-slate-800/50 rounded-2xl animate-pulse" />
+        <div key={i} className="h-16 bg-slate-900/60 border border-slate-800/50 rounded-2xl animate-pulse" />
       ))}
     </div>
   );
@@ -413,15 +450,15 @@ function AdminDashboardContent() {
 
       {/* Error/Success alerts */}
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="bg-rose-950/40 border-rose-500/30 text-rose-300">
           <ShieldAlert className="w-4 h-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Action Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {success && (
-        <Alert className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600">
-          <CheckCircle className="w-4 h-4 text-emerald-500" />
+        <Alert className="border-emerald-500/30 bg-emerald-950/30 text-emerald-300">
+          <CheckCircle className="w-4 h-4 text-emerald-400" />
           <AlertTitle>Success</AlertTitle>
           <AlertDescription>{success}</AlertDescription>
         </Alert>
@@ -432,10 +469,10 @@ function AdminDashboardContent() {
         <div className="space-y-8">
           
           {/* Admin Profile Banner */}
-          <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 rounded-3xl p-8 shadow-2xl">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--primary)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          <section className="relative overflow-hidden nexus-card rounded-3xl p-8 border border-cyan-500/20">
+            <div className="absolute inset-0 pointer-events-none opacity-20">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             </div>
             <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -443,22 +480,27 @@ function AdminDashboardContent() {
                   <img
                     src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
                     alt={session?.user?.name}
-                    className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-xl"
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-cyan-500/60 shadow-xl nexus-glow-cyan"
                   />
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg flex items-center justify-center border-2 border-slate-900">
-                    <ShieldCheck className="w-3 h-3 text-white" />
+                  <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-cyan-500 rounded-lg flex items-center justify-center border-2 border-[#070c12]">
+                    <ShieldCheck className="w-4 h-4 text-slate-950" />
                   </div>
                 </div>
                 <div className="text-center sm:text-left space-y-1">
-                  <h1 className="text-2xl font-black text-white">{session?.user?.name}</h1>
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <h1 className="text-2xl font-black text-white">{session?.user?.name}</h1>
+                    <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-black uppercase tracking-wider">
+                      SUPER ADMIN
+                    </span>
+                  </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                    <span className="flex items-center justify-center sm:justify-start gap-1.5 text-sm text-slate-300">
-                      <Mail className="w-3.5 h-3.5" />
+                    <span className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-400">
+                      <Mail className="w-3.5 h-3.5 text-cyan-400" />
                       {session?.user?.email}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--primary)]/20 text-[var(--primary)] rounded-full text-xs font-bold uppercase tracking-wider">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-500/20">
                       <Shield className="w-3 h-3" />
-                      System Administrator
+                      System Access Active
                     </span>
                   </div>
                 </div>
@@ -467,14 +509,14 @@ function AdminDashboardContent() {
               {/* Time and Action */}
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 {currentTime && (
-                  <span className="flex items-center gap-1.5 text-xs text-slate-300 bg-white/10 px-3.5 py-2 rounded-xl backdrop-blur-md border border-white/5">
-                    <Clock className="w-3.5 h-3.5 text-[var(--primary)]" />
+                  <span className="flex items-center gap-2 text-xs font-bold text-slate-300 bg-[#070c12]/80 px-4 py-2.5 rounded-2xl border border-slate-800">
+                    <Clock className="w-4 h-4 text-cyan-400" />
                     <span>{currentTime.toLocaleTimeString()}</span>
                   </span>
                 )}
                 <button
                   onClick={() => setIsProfileModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4.5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10 shadow-lg active:scale-95"
+                  className="px-5 py-2.5 nexus-pill-btn rounded-2xl text-xs flex items-center gap-2"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>Edit Profile</span>
@@ -483,98 +525,122 @@ function AdminDashboardContent() {
             </div>
           </section>
 
-          {/* Overview Stats Grid */}
-          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Overview Stats Grid (NexusX Style) */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { label: "Total Routes", value: totalTicketsCount, icon: Ticket, color: "var(--primary)", bgColor: "var(--primary)" },
-              { label: "Platform Users", value: totalUsersCount, icon: Users, color: "#6366f1", bgColor: "#6366f1" },
-              { label: "Active Ads", value: activeAdsCount, icon: Sparkles, color: "#10b981", bgColor: "#10b981" },
-              { label: "Fraud Flagged", value: fraudUsersCount, icon: AlertTriangle, color: "#ef4444", bgColor: "#ef4444" },
+              { label: "Total Transport Routes", value: totalTicketsCount, icon: Ticket, color: "#00f2fe", pct: "+12.5%" },
+              { label: "Registered Users", value: totalUsersCount, icon: Users, color: "#10b981", pct: "+8.2%" },
+              { label: "Active Advertisements", value: activeAdsCount, icon: Sparkles, color: "#f59e0b", pct: "Live" },
+              { label: "Fraud Flagged Users", value: fraudUsersCount, icon: AlertTriangle, color: "#f43f5e", pct: "Flagged" },
             ].map((stat, i) => (
-              <div key={i} className="group bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+              <div key={i} className="nexus-card rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">{stat.label}</span>
-                    <span className="text-3xl font-black" style={{ color: stat.color }}>
-                      {(loadingTickets && i < 2) || (loadingUsers && i >= 1) ? "..." : <CountUp end={stat.value} />}
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-xl transition-colors" style={{ backgroundColor: stat.bgColor + "15" }}>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">{stat.label}</span>
+                  <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
                     <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
                   </div>
+                </div>
+                <div className="mt-4 flex items-baseline justify-between">
+                  <span className="text-3xl font-black text-white">
+                    {(loadingTickets && i < 2) || (loadingUsers && i >= 1) ? "..." : <CountUp end={stat.value} />}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    {stat.pct}
+                  </span>
                 </div>
               </div>
             ))}
           </section>
 
-          {/* Ticket Status Breakdown */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Approved</span>
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
+          {/* Ticket Status Breakdown Cards */}
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="nexus-card rounded-3xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Approved Tickets</span>
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <CheckCircle className="w-4 h-4" />
+                </div>
               </div>
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                {loadingTickets ? "..." : <CountUp end={approvedCount} />}
-              </span>
-              <div className="mt-3 h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="flex items-baseline justify-between">
+                <span className="text-3xl font-black text-emerald-400">
+                  {loadingTickets ? "..." : <CountUp end={approvedCount} />}
+                </span>
+                <span className="text-xs font-bold text-slate-400">
+                  {totalTicketsCount ? Math.round((approvedCount / totalTicketsCount) * 100) : 0}%
+                </span>
+              </div>
+              <div className="mt-4 h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                 <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                  className="h-full bg-emerald-400 rounded-full transition-all duration-1000"
                   style={{ width: totalTicketsCount ? `${(approvedCount / totalTicketsCount) * 100}%` : "0%" }}
                 />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Review</span>
-                <Clock className="w-4 h-4 text-amber-500" />
+            <div className="nexus-card rounded-3xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Review</span>
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Clock className="w-4 h-4" />
+                </div>
               </div>
-              <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
-                {loadingTickets ? "..." : <CountUp end={pendingCount} />}
-              </span>
-              <div className="mt-3 h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="flex items-baseline justify-between">
+                <span className="text-3xl font-black text-amber-400">
+                  {loadingTickets ? "..." : <CountUp end={pendingCount} />}
+                </span>
+                <span className="text-xs font-bold text-slate-400">
+                  {totalTicketsCount ? Math.round((pendingCount / totalTicketsCount) * 100) : 0}%
+                </span>
+              </div>
+              <div className="mt-4 h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                 <div
-                  className="h-full bg-amber-500 rounded-full transition-all duration-1000"
+                  className="h-full bg-amber-400 rounded-full transition-all duration-1000"
                   style={{ width: totalTicketsCount ? `${(pendingCount / totalTicketsCount) * 100}%` : "0%" }}
                 />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Rejected</span>
-                <XCircle className="w-4 h-4 text-red-500" />
+            <div className="nexus-card rounded-3xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rejected Tickets</span>
+                <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  <XCircle className="w-4 h-4" />
+                </div>
               </div>
-              <span className="text-2xl font-black text-red-600 dark:text-red-400">
-                {loadingTickets ? "..." : <CountUp end={rejectedCount} />}
-              </span>
-              <div className="mt-3 h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="flex items-baseline justify-between">
+                <span className="text-3xl font-black text-rose-400">
+                  {loadingTickets ? "..." : <CountUp end={rejectedCount} />}
+                </span>
+                <span className="text-xs font-bold text-slate-400">
+                  {totalTicketsCount ? Math.round((rejectedCount / totalTicketsCount) * 100) : 0}%
+                </span>
+              </div>
+              <div className="mt-4 h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                 <div
-                  className="h-full bg-red-500 rounded-full transition-all duration-1000"
+                  className="h-full bg-rose-400 rounded-full transition-all duration-1000"
                   style={{ width: totalTicketsCount ? `${(rejectedCount / totalTicketsCount) * 100}%` : "0%" }}
                 />
               </div>
             </div>
           </section>
 
-          {/* User Role Breakdown */}
-          <section className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-5 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[var(--primary)]" />
-              User Role Distribution
+          {/* User Role Distribution */}
+          <section className="nexus-card rounded-3xl p-6">
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 mb-6 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-cyan-400" />
+              Platform Role Breakdown
             </h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { label: "Regular Users", count: totalUsersCount - vendorCount - adminCount, color: "#6366f1" },
-                { label: "Vendors", count: vendorCount, color: "#10b981" },
-                { label: "Admins", count: adminCount, color: "#f59e0b" },
-              ].map((role, i) => (
-                <div key={i} className="text-center p-4 rounded-xl bg-gray-50 dark:bg-slate-800/50">
-                  <span className="text-2xl font-black block" style={{ color: role.color }}>
-                    {loadingUsers ? "..." : <CountUp end={role.count} />}
+                { label: "Regular Passengers", count: totalUsersCount - vendorCount - adminCount, color: "#00f2fe" },
+                { label: "Verified Vendors", count: vendorCount, color: "#10b981" },
+                { label: "System Admins", count: adminCount, color: "#f59e0b" },
+              ].map((roleItem, i) => (
+                <div key={i} className="text-center p-5 rounded-2xl bg-[#091119] border border-slate-800">
+                  <span className="text-3xl font-black block" style={{ color: roleItem.color }}>
+                    {loadingUsers ? "..." : <CountUp end={roleItem.count} />}
                   </span>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1 block">{role.label}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">{roleItem.label}</span>
                 </div>
               ))}
             </div>
@@ -586,10 +652,10 @@ function AdminDashboardContent() {
       {activeTab === "tickets" && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Ticket className="w-5 h-5 text-[var(--primary)]" />
+            <h2 className="text-xl font-black text-white flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-cyan-400" />
               Manage Platform Tickets
-              <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
                 {filteredTickets.length}
               </span>
             </h2>
@@ -598,21 +664,21 @@ function AdminDashboardContent() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search by title, from, to..."
                 value={ticketSearch}
                 onChange={(e) => setTicketSearch(e.target.value)}
-                className="w-full pl-10 pr-4 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all"
+                className="w-full pl-10 pr-4 h-11 bg-[#0d1620] border border-slate-800 rounded-2xl text-xs font-medium text-slate-200 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
+              <Filter className="w-4 h-4 text-slate-500" />
               <select
                 value={ticketStatusFilter}
                 onChange={(e) => setTicketStatusFilter(e.target.value)}
-                className="px-3 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
+                className="px-4 h-11 bg-[#0d1620] border border-slate-800 rounded-2xl text-xs font-bold text-slate-200 focus:outline-none focus:border-cyan-500/50"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -625,46 +691,46 @@ function AdminDashboardContent() {
           {loadingTickets ? (
             <SkeletonRows count={5} />
           ) : filteredTickets.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-12 text-center">
-              <Ticket className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 font-medium">No tickets found.</p>
+            <div className="nexus-card rounded-3xl p-12 text-center">
+              <Ticket className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-400 font-medium">No tickets found matching your query.</p>
             </div>
           ) : (
             <>
-              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
+              <div className="nexus-card rounded-3xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)]">
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Route</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Type</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Price</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Seats</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Status</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Actions</th>
+                      <tr className="bg-[#091119] border-b border-slate-800">
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Route & Title</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Type</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Price</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Available Seats</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Status</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
+                    <tbody className="divide-y divide-slate-800/60">
                       {currentTickets.map((t) => (
-                        <tr key={t._id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                        <tr key={t._id} className="hover:bg-cyan-500/5 transition-colors">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               {t.image && (
-                                <img src={t.image} alt="" className="w-10 h-10 rounded-xl object-cover border border-[var(--border)]/30" />
+                                <img src={t.image} alt="" className="w-11 h-11 rounded-xl object-cover border border-slate-700" />
                               )}
                               <div>
-                                <span className="font-bold text-slate-800 dark:text-slate-200 block">{t.title}</span>
-                                <span className="text-[10px] text-gray-400 block">{t.from} → {t.to}</span>
+                                <span className="font-bold text-white block">{t.title}</span>
+                                <span className="text-[10px] text-cyan-400 block">{t.from} → {t.to}</span>
                               </div>
                             </div>
                           </td>
                           <td className="p-4">
-                            <span className="px-2 py-1 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                            <span className="px-2.5 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg text-[10px] font-black uppercase tracking-wider">
                               {t.transportType}
                             </span>
                           </td>
-                          <td className="p-4 font-bold text-slate-800 dark:text-slate-100">${t.price}</td>
-                          <td className="p-4 text-gray-500 font-medium">{t.ticketQuantity}</td>
+                          <td className="p-4 font-black text-white">${t.price}</td>
+                          <td className="p-4 text-slate-300 font-bold">{t.ticketQuantity}</td>
                           <td className="p-4">{getStatusBadge(t.status)}</td>
                           <td className="p-4">
                             <div className="flex items-center gap-2">
@@ -673,16 +739,16 @@ function AdminDashboardContent() {
                                   <button
                                     onClick={() => handleTicketStatus(t._id, "approved")}
                                     disabled={actionLoading === t._id}
-                                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors disabled:opacity-50"
+                                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50"
                                   >
-                                    <CheckCircle className="w-3 h-3" /> Approve
+                                    <CheckCircle className="w-3.5 h-3.5" /> Approve
                                   </button>
                                   <button
                                     onClick={() => handleTicketStatus(t._id, "rejected")}
                                     disabled={actionLoading === t._id}
-                                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border border-red-500/20 disabled:opacity-50"
+                                    className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all border border-rose-500/30 disabled:opacity-50"
                                   >
-                                    <XCircle className="w-3 h-3" /> Reject
+                                    <XCircle className="w-3.5 h-3.5" /> Reject
                                   </button>
                                 </>
                               )}
@@ -690,18 +756,18 @@ function AdminDashboardContent() {
                                 <button
                                   onClick={() => handleTicketStatus(t._id, "rejected")}
                                   disabled={actionLoading === t._id}
-                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border border-red-500/20 disabled:opacity-50"
+                                  className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all border border-rose-500/30 disabled:opacity-50"
                                 >
-                                  <Ban className="w-3 h-3" /> Revoke
+                                  <Ban className="w-3.5 h-3.5" /> Revoke
                                 </button>
                               )}
                               {t.status === "rejected" && (
                                 <button
                                   onClick={() => handleTicketStatus(t._id, "approved")}
                                   disabled={actionLoading === t._id}
-                                  className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors border border-emerald-500/20 disabled:opacity-50"
+                                  className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all border border-emerald-500/30 disabled:opacity-50"
                                 >
-                                  <CheckCircle className="w-3 h-3" /> Approve
+                                  <CheckCircle className="w-3.5 h-3.5" /> Approve
                                 </button>
                               )}
                             </div>
@@ -722,10 +788,10 @@ function AdminDashboardContent() {
       {activeTab === "users" && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Users className="w-5 h-5 text-[var(--primary)]" />
+            <h2 className="text-xl font-black text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-cyan-400" />
               Manage Platform Users
-              <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
                 {filteredUsers.length}
               </span>
             </h2>
@@ -734,21 +800,21 @@ function AdminDashboardContent() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search by name or email..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="w-full pl-10 pr-4 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all"
+                className="w-full pl-10 pr-4 h-11 bg-[#0d1620] border border-slate-800 rounded-2xl text-xs font-medium text-slate-200 focus:outline-none focus:border-cyan-500/50 transition-all"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
+              <Filter className="w-4 h-4 text-slate-500" />
               <select
                 value={userRoleFilter}
                 onChange={(e) => setUserRoleFilter(e.target.value)}
-                className="px-3 h-10 bg-slate-50/30 dark:bg-slate-950/30 border border-[var(--border)] rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
+                className="px-4 h-11 bg-[#0d1620] border border-slate-800 rounded-2xl text-xs font-bold text-slate-200 focus:outline-none focus:border-cyan-500/50"
               >
                 <option value="all">All Roles</option>
                 <option value="user">Users</option>
@@ -758,56 +824,39 @@ function AdminDashboardContent() {
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: "Total", value: totalUsersCount, color: "#6366f1" },
-              { label: "Vendors", value: vendorCount, color: "#10b981" },
-              { label: "Admins", value: adminCount, color: "#f59e0b" },
-              { label: "Flagged", value: fraudUsersCount, color: "#ef4444" },
-            ].map((s, i) => (
-              <div key={i} className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl p-3 text-center">
-                <span className="text-xl font-black block" style={{ color: s.color }}>
-                  {loadingUsers ? "..." : <CountUp end={s.value} />}
-                </span>
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{s.label}</span>
-              </div>
-            ))}
-          </div>
-
           {loadingUsers ? (
             <SkeletonRows count={5} />
           ) : filteredUsers.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-12 text-center">
-              <Users className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 font-medium">No users found.</p>
+            <div className="nexus-card rounded-3xl p-12 text-center">
+              <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-400 font-medium">No users found matching your query.</p>
             </div>
           ) : (
             <>
-              <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
+              <div className="nexus-card rounded-3xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-gray-50 dark:bg-slate-950 border-b border-[var(--border)]">
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">User</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Role</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Fraud Status</th>
-                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-gray-400">Actions</th>
+                      <tr className="bg-[#091119] border-b border-slate-800">
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">User Profile</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Role</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Fraud Status</th>
+                        <th className="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-400">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
+                    <tbody className="divide-y divide-slate-800/60">
                       {currentUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                        <tr key={u.id} className="hover:bg-cyan-500/5 transition-colors">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               <img
                                 src={u.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"}
-                                className="w-9 h-9 rounded-xl object-cover border border-[var(--border)]"
+                                className="w-10 h-10 rounded-xl object-cover border border-slate-700"
                                 alt=""
                               />
                               <div>
-                                <span className="font-bold text-slate-800 dark:text-slate-200 block">{u.name}</span>
-                                <span className="text-[10px] text-gray-400 block">{u.email}</span>
+                                <span className="font-bold text-white block">{u.name}</span>
+                                <span className="text-[10px] text-cyan-400 block">{u.email}</span>
                               </div>
                             </div>
                           </td>
@@ -816,21 +865,21 @@ function AdminDashboardContent() {
                               value={u.role || "user"}
                               disabled={actionLoading === u.id + "_role" || u.id === session?.user?.id}
                               onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                              className="bg-gray-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-[var(--border)] text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="bg-[#091119] text-slate-200 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-bold focus:outline-none focus:border-cyan-500 disabled:opacity-50"
                             >
-                              <option value="user">User</option>
-                              <option value="vendor">Vendor</option>
-                              <option value="admin">Admin</option>
+                              <option value="user">Passenger User</option>
+                              <option value="vendor">Verified Vendor</option>
+                              <option value="admin">System Admin</option>
                             </select>
                           </td>
                           <td className="p-4">
                             {u.isFraud ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 dark:text-red-400 rounded-full border border-red-500/20">
+                              <span className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-400 rounded-full border border-rose-500/30">
                                 <AlertTriangle className="w-3 h-3" />
-                                FRAUD
+                                FRAUD FLAGGED
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
+                              <span className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/30">
                                 <ShieldCheck className="w-3 h-3" />
                                 Clean
                               </span>
@@ -838,20 +887,30 @@ function AdminDashboardContent() {
                           </td>
                           <td className="p-4">
                             {u.id !== session?.user?.id ? (
-                              <button
-                                onClick={() => handleFraudToggle(u.id, u.isFraud)}
-                                disabled={actionLoading === u.id + "_fraud"}
-                                className={`px-3 py-1.5 font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center gap-1 border transition-colors disabled:opacity-50 ${
-                                  u.isFraud
-                                    ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 border-emerald-500/20"
-                                    : "bg-red-500/10 hover:bg-red-500/20 text-red-600 border-red-500/20"
-                                }`}
-                              >
-                                <AlertTriangle className="w-3 h-3" />
-                                {u.isFraud ? "Clear Flag" : "Flag Fraud"}
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleImpersonate(u.id, u.name, u.email)}
+                                  disabled={actionLoading === u.id + "_impersonate"}
+                                  className="px-3.5 py-2 nexus-pill-btn rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all disabled:opacity-50"
+                                  title={`Log into ${u.name}'s account`}
+                                >
+                                  <LogIn className="w-3.5 h-3.5" />
+                                  Log In As User
+                                </button>
+                                <button
+                                  onClick={() => handleFraudToggle(u.id, u.isFraud)}
+                                  disabled={actionLoading === u.id + "_fraud"}
+                                  className={`px-3 py-2 font-black text-[10px] uppercase tracking-wider rounded-xl flex items-center gap-1 border transition-colors disabled:opacity-50 ${u.isFraud
+                                      ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                                      : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/30"
+                                    }`}
+                                >
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  {u.isFraud ? "Clear Flag" : "Flag Fraud"}
+                                </button>
+                              </div>
                             ) : (
-                              <span className="text-[10px] text-gray-400 italic font-medium">Your Account</span>
+                              <span className="text-[10px] text-slate-500 italic font-medium">Active Account</span>
                             )}
                           </td>
                         </tr>
@@ -870,34 +929,19 @@ function AdminDashboardContent() {
       {activeTab === "advertise" && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-emerald-500" />
+            <h2 className="text-xl font-black text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-400" />
               Homepage Advertisement Slots
             </h2>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-gray-400">
-                Active Ads: <span className="text-emerald-500">{activeAdsCount}</span> / 6 max
+              <span className="text-xs font-bold text-slate-400">
+                Active Ads: <span className="text-cyan-400">{activeAdsCount}</span> / 6 max
               </span>
-              <div className="w-24 h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-24 h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                 <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  className="h-full bg-cyan-400 rounded-full transition-all duration-500"
                   style={{ width: `${(activeAdsCount / 6) * 100}%` }}
                 />
-              </div>
-            </div>
-          </div>
-
-          {/* Ad Info Banner */}
-          <div className="bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-indigo-500/10 border border-emerald-500/20 rounded-2xl p-5">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-emerald-500/10 rounded-xl">
-                <Globe className="w-5 h-5 text-emerald-500" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Premium Homepage Placements</h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Toggle the advertisement switch on any approved ticket to feature it on the homepage hero carousel. Maximum 6 slots available.
-                </p>
               </div>
             </div>
           </div>
@@ -905,71 +949,66 @@ function AdminDashboardContent() {
           {loadingTickets ? (
             <SkeletonRows count={4} />
           ) : approvedTickets.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-[var(--border)] rounded-2xl p-12 text-center">
-              <Sparkles className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 font-medium">No approved tickets to advertise.</p>
-              <p className="text-[10px] text-gray-400 mt-1">Approve tickets from the Manage Tickets tab first.</p>
+            <div className="nexus-card rounded-3xl p-12 text-center">
+              <Sparkles className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-400 font-medium">No approved tickets available for placement.</p>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {currentAdTickets.map((t) => (
                   <div
                     key={t._id}
-                    className={`relative bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
-                      t.isAdvertised
-                        ? "border-emerald-500/30 ring-1 ring-emerald-500/20"
-                        : "border-[var(--border)]"
-                    }`}
+                    className={`relative nexus-card rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 ${t.isAdvertised
+                        ? "border-cyan-500/50 shadow-xl shadow-cyan-500/10"
+                        : ""
+                      }`}
                   >
-                    {/* Ad Active Indicator */}
+                    {/* Live Ad Indicator */}
                     {t.isAdvertised && (
                       <div className="absolute top-3 right-3 z-10">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[9px] font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
-                          <Eye className="w-2.5 h-2.5" /> LIVE
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-cyan-500 text-slate-950 rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg shadow-cyan-500/30">
+                          <Eye className="w-3 h-3" /> LIVE AD
                         </span>
                       </div>
                     )}
 
-                    {/* Ticket Image */}
                     {t.image ? (
-                      <img src={t.image} alt={t.title} className="w-full h-36 object-cover" />
+                      <img src={t.image} alt={t.title} className="w-full h-40 object-cover" />
                     ) : (
-                      <div className="w-full h-36 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
-                        <Ticket className="w-8 h-8 text-gray-300 dark:text-slate-600" />
+                      <div className="w-full h-40 bg-[#091119] flex items-center justify-center">
+                        <Ticket className="w-10 h-10 text-slate-600" />
                       </div>
                     )}
 
-                    <div className="p-4 space-y-3">
+                    <div className="p-5 space-y-4">
                       <div>
-                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{t.title}</h3>
-                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                        <h3 className="font-bold text-sm text-white truncate">{t.title}</h3>
+                        <p className="text-[10px] text-cyan-400 font-medium mt-1">
                           {t.from} → {t.to} • <span className="capitalize">{t.transportType}</span>
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-800 dark:text-slate-100">${t.price}</span>
-                        <span className="text-gray-400">{t.ticketQuantity} seats</span>
+                      <div className="flex items-center justify-between text-xs border-t border-slate-800/80 pt-3">
+                        <span className="font-black text-white">${t.price}</span>
+                        <span className="text-slate-400">{t.ticketQuantity} seats</span>
                       </div>
 
                       {/* Ad Toggle Button */}
                       <button
                         onClick={() => handleAdToggle(t._id, t.isAdvertised)}
                         disabled={actionLoading === t._id + "_ad" || (!t.isAdvertised && activeAdsCount >= 6)}
-                        title={!t.isAdvertised && activeAdsCount >= 6 ? "Ad limit reached (6 max)" : ""}
-                        className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                          t.isAdvertised
-                            ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        className={`w-full py-3 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${t.isAdvertised
+                            ? "nexus-pill-btn"
                             : activeAdsCount >= 6
-                            ? "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed"
-                            : "bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400"
-                        }`}
+                              ? "bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed"
+                              : "bg-[#091119] hover:bg-slate-800 text-slate-300 border border-slate-800"
+                          }`}
                       >
                         {t.isAdvertised ? (
-                          <><ToggleRight className="w-5 h-5" /> Advertised</>
+                          <><ToggleRight className="w-5 h-5" /> Featured on Homepage</>
                         ) : (
-                          <><ToggleLeft className="w-5 h-5" /> Enable Ad</>
+                          <><ToggleLeft className="w-5 h-5" /> Enable Ad Slot</>
                         )}
                       </button>
                     </div>
@@ -991,60 +1030,61 @@ function AdminDashboardContent() {
         onConfirm={confirmDialog.onConfirm}
         onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
       />
+
       {/* Edit Profile Modal */}
       {isProfileModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-[var(--border)] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-md nexus-card rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative border border-cyan-500/30">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-extrabold tracking-tight text-foreground">Edit Profile</h2>
-              <button onClick={() => setIsProfileModalOpen(false)} className="p-1 hover:bg-[var(--border)] rounded-lg transition-colors text-foreground/60">
+              <h2 className="text-lg font-black text-white">Edit Admin Profile</h2>
+              <button onClick={() => setIsProfileModalOpen(false)} className="p-1.5 hover:bg-slate-800 rounded-xl text-slate-400">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {profileError && (
-              <div className="bg-red-55 dark:bg-red-955/20 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-xs font-semibold border border-red-200/50">
+              <div className="bg-rose-950/40 text-rose-300 p-3.5 rounded-2xl text-xs font-semibold border border-rose-500/30">
                 {profileError}
               </div>
             )}
 
             <form onSubmit={handleProfileUpdate} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Display Name</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Display Name</label>
                 <input
                   type="text"
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3 h-10 rounded-lg bg-[var(--input)] border border-[var(--border)] text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
+                  className="w-full px-4 h-11 rounded-2xl bg-[#091119] border border-slate-800 text-white text-sm focus:outline-none focus:border-cyan-500"
                 />
               </div>
-              
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">Profile Image</label>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Profile Image</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => setEditImageFile(e.target.files[0])}
-                  className="w-full px-3 py-1.5 h-10 rounded-lg bg-[var(--input)] border border-[var(--border)] text-foreground file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary)]/10 file:text-[var(--primary)] hover:file:opacity-80 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] flex items-center"
+                  className="w-full px-3 py-2 rounded-2xl bg-[#091119] border border-slate-800 text-slate-300 text-xs focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsProfileModalOpen(false)}
-                  className="flex-1 py-3 border border-[var(--border)] text-foreground hover:bg-[var(--input)] font-semibold rounded-xl text-sm transition-all"
+                  className="flex-1 py-3 border border-slate-800 text-slate-300 hover:bg-slate-800 font-bold rounded-2xl text-xs transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={profileSaving}
-                  className="flex-1 py-3 bg-[var(--primary)] hover:opacity-95 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md"
+                  className="flex-1 py-3 nexus-pill-btn rounded-2xl text-xs flex items-center justify-center gap-2"
                 >
                   {profileSaving ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
+                    <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent animate-spin rounded-full"></div>
                   ) : (
                     "Save Changes"
                   )}
@@ -1063,7 +1103,7 @@ export default function AdminDashboard() {
     <Suspense fallback={
       <div className="space-y-6">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-32 bg-gray-100 dark:bg-slate-800/50 rounded-2xl animate-pulse" />
+          <div key={i} className="h-32 bg-slate-900/40 rounded-3xl animate-pulse" />
         ))}
       </div>
     }>
