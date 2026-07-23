@@ -214,23 +214,57 @@ function UserDashboardContent() {
     fetchUserData();
   }, [session]);
 
+  useEffect(() => {
+    const status = searchParams?.get("status");
+    const bookingId = searchParams?.get("bookingId");
+
+    if (status === "success") {
+      if (bookingId) {
+        fetch("/api/checkout_sessions/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              toast.success("Payment completed successfully! Booking confirmed.");
+            } else {
+              toast.error(data.error || "Payment completed, syncing status...");
+            }
+            fetchUserData();
+          })
+          .catch(() => {
+            fetchUserData();
+          });
+      } else {
+        toast.success("Payment completed successfully!");
+        fetchUserData();
+      }
+    } else if (status === "cancel") {
+      toast.error("Payment process was cancelled.");
+    }
+  }, [searchParams]);
+
   const handlePayNow = async (bookingId) => {
     setPaymentLoading(bookingId);
     try {
-      const token = await getToken();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings/${bookingId}/pay`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch("/api/checkout_sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Payment confirmation failed");
+      if (!res.ok) throw new Error(data.error || "Payment session initialization failed.");
 
-      toast.success("Payment confirmed successfully!");
-      fetchUserData();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No Stripe checkout URL received.");
+      }
     } catch (err) {
       toast.error(err.message || "Payment failed.");
-    } finally {
       setPaymentLoading("");
     }
   };

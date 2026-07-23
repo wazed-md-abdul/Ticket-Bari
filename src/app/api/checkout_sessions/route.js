@@ -3,10 +3,18 @@ import { getDb } from "@/lib/db";
 import { ObjectId } from "mongodb";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 export async function POST(request) {
   try {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) {
+      return NextResponse.json(
+        { error: "Stripe Secret Key (STRIPE_SECRET_KEY) is missing in environment variables." },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(stripeSecretKey);
+
     const { bookingId } = await request.json();
     if (!bookingId) {
       return NextResponse.json({ error: "Missing booking ID" }, { status: 400 });
@@ -36,6 +44,11 @@ export async function POST(request) {
       return NextResponse.json({ error: "Not enough tickets available." }, { status: 400 });
     }
 
+    // Resolve app base URL with fallback for Vercel deployments
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
     // Generate Stripe Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -47,14 +60,14 @@ export async function POST(request) {
               name: `${booking.ticketTitle} (${booking.transportType.toUpperCase()})`,
               description: `Route: ${ticket.from} to ${ticket.to} | Departs: ${new Date(ticket.departureDateTime).toLocaleString()}`,
             },
-            unit_amount: ticket.price * 100, // cents
+            unit_amount: Math.round(Number(ticket.price) * 100), // cents
           },
           quantity: booking.bookedQuantity,
         },
       ],
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/user?status=success&bookingId=${bookingId}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/user?status=cancel`,
+      success_url: `${appUrl}/dashboard/user?status=success&bookingId=${bookingId}`,
+      cancel_url: `${appUrl}/dashboard/user?status=cancel`,
       metadata: {
         bookingId: bookingId,
         ticketId: booking.ticketId,
@@ -67,3 +80,4 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
